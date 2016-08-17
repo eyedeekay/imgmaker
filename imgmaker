@@ -87,6 +87,6 @@ fi
 setup_system_partition
 dialog --title "$PROGRAM_TITLE" --msgbox "$USERCFG_MESSAGE $USERNAME" 30 78
 setup_user
-SUCCESS_MESSAGE=success_message
+SUCCESS_MESSAGE=$(success_message)
 dialog --title "$PROGRAM_TITLE" --msgbox "$SUCCESS_MESSAGE" 30 78
 

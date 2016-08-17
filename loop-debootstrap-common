@@ -139,6 +139,10 @@ setup_system_partition(){
         for i in $(find $HOOKDIR -name *.d.sh); do
                 . $i > $i.log
         done
+        sudo chroot $BUILDDIR apt-get update
+        sudo chroot $BUILDDIR apt-get dist-upgrade -y
+        sudo chroot $BUILDDIR apt-get update
+        sudo chroot $BUILDDIR apt-get dist-upgrade -y
         sudo cp $KRNDIR/*.deb $BUILDDIR/home
         sudo chroot $BUILDDIR bash -c 'dpkg -i /home/*.deb'
         sudo chroot $BUILDDIR apt-get install -t sid e2fsprogs e2fsck-static xserver-xorg-input-multitouch x11-touchscreen-calibrator gsl1680 xdm -y
@@ -215,7 +219,7 @@ setup_user(){
         sudo chroot $BUILDDIR adduser --disabled-password --shell /bin/dash --home /home/$USERNAME $USERNAME
         sudo chroot $BUILDDIR bash -c "echo $USERNAME:$PASSWORD | chpasswd"
         echo "
-        /usr/X11/bin/xvkbd -geometry 1024x300+0+300 &
+        /usr/bin/xvkbd -geometry 1024x300+0+300 &
         " | tee -a $BUILDDIR/home/$USERNAME/.xsession
         sudo chroot $BUILDDIR apt-get update
         sudo chroot $BUILDDIR apt-get dist-upgrade -y
