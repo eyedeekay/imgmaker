@@ -51,6 +51,9 @@ dialog --title "$PROGRAM_TITLE" --msgbox "$IMGGEN_MESSAGE" 30 78
 if [ -z "$DISTRO_NAME" ]; then
         export DISTRO_NAME=$(dialog --title "$PROGRAM_TITLE" --inputbox "Enter a name for your device." 30 78 3>&1 1>&2 2>&3) && HOSTNAME="$DISTRO_NAME"
 fi
+#if [ -z "$DISK_SIZE" ]; then
+#        export DISK_SIZE=$(dialog --title "$PROGRAM_TITLE" --inputbox "How big is the SD card you will be using?" 30 78 3>&1 1>&2 2>&3)
+#fi
 create_empty_disk_image 2> zeroimage.err
 dialog --title "$PROGRAM_TITLE" --msgbox "$UBOOT_MESSAGE" 30 78
 if [ -z "$UBOOTBIN" ]; then
@@ -63,10 +66,16 @@ if [ -z "$DTFILE" ]; then
 fi
 write_uboot_to_first
 dialog --title "$PROGRAM_TITLE" --msgbox "$PARTITION_MESSAGE" 30 78
+#if [ -z "$DISK_SIZE" ]; then
+#        export DISK_SIZE=$(dialog --title "$PROGRAM_TITLE" --inputbox "How big is the SD card you will be using?" 30 78 3>&1 1>&2 2>&3)
+#fi
 create_partitions_for_image
 dialog --title "$PROGRAM_TITLE" --msgbox "$MOUNT_MESSAGE" 30 78
 setup_partitions_for_image
 dialog --title "$PROGRAM_TITLE" --msgbox "$CONFIG_BOOT" 30 78
+#if [ -z "$DISK_SIZE" ]; then
+#        export DISK_SIZE=$(dialog --title "$PROGRAM_TITLE" --inputbox "How big is the SD card you will be using?" 30 78 3>&1 1>&2 2>&3)
+#fi
 setup_boot_partition
 dialog --title "$PROGRAM_TITLE" --msgbox "$INSTALL_SYSTEM" 30 78
 if [ -z "$USERNAME" ]; then
@@ -75,10 +84,9 @@ fi
 if [ -z "$PASSWORD" ]; then
         export PASSWORD=$(dialog --title "$PROGRAM_TITLE" --passwordbox "Set a password for your user" 30 78 3>&1 1>&2 2>&3)
 fi
-dialog --title "$PROGRAM_TITLE" --msgbox "$INSTALL_SYSTEM" 30 78
 setup_system_partition
 dialog --title "$PROGRAM_TITLE" --msgbox "$USERCFG_MESSAGE $USERNAME" 30 78
 setup_user
-
-print_the_env
+SUCCESS_MESSAGE=success_message
+dialog --title "$PROGRAM_TITLE" --msgbox "$SUCCESS_MESSAGE" 30 78
 

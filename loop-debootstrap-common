@@ -31,6 +31,18 @@ print_the_env(){
         echo "uboot path         $UBOOT_PATH"
 }
 
+success_message(){
+        echo "You have created an SD card image successfully in $CWD. The image
+        file is named $DISK_NAME.img.
+
+        Your username is $USERNAME.
+        Your device is named $HOSTNAME.
+        Your image is $DISK_SIZE bytes in size.
+
+        It was based on the $CODENAME distribution of Debian.
+        "
+}
+
 unmount_working_dirs(){
         [ -d $BUILDDIR/dev ] && sudo umount -d $BUILDDIR/dev/pts
         [ -d $BUILDDIR/dev ] && sudo umount -d $BUILDDIR/dev
