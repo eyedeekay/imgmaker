@@ -1,0 +1,11 @@
+OK
+OK
+OK
+OK
+OK
+Get:1 http://packages.devuan.org jessie InRelease [108 kB]
+Get:2 http://packages.devuan.org jessie/main armhf Packages [6,633 kB]
+Ign http://packages.devuan.org jessie/main Translation-en_US
+Ign http://packages.devuan.org jessie/main Translation-en
+Fetched 6,741 kB in 14s (460 kB/s)
+Reading package lists...

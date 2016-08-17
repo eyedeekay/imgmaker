@@ -1,0 +1,4 @@
+*.img
+*.img.last
+sdbuild-*
+sdbuild-*-boot

@@ -1,0 +1,84 @@
+#! /bin/sh
+#http://superuser.com/questions/830733/how-to-build-an-sd-card-image-without-an-sd-card
+export CWD=$(pwd)
+
+[ -f /usr/lib/loop-debootstrap-common ] &&  . /usr/lib/loop-debootstrap-common && echo "Common functions loaded."
+[ -f /usr/lib/loop-debootstrap-common.conf ] &&  . /usr/lib/loop-debootstrap-common.conf && echo "Common settings loaded."
+
+[ -f loop-debootstrap.conf ] && . ./loop-debootstrap.conf && echo "Settings Loaded"
+[ -f /etc/imgmakrc ] && . /etc/imgmakrc && echo "Settings Loaded"
+
+[ -f loop-debootstrap-common ] &&  . ./loop-debootstrap-common && echo "Custom common functions Loaded"
+[ -f loop-debootstrap-common.conf ] && . ./loop-debootstrap-common.conf && echo "Custom common settings loaded."
+
+[ -f ./.sdcardrc ] && . ./.sdcardrc && echo "Custom common settings loaded."
+
+#CONSTANTS
+
+export PROGAM_TITLE="Allwinner SD Card Debian Image Helper"
+export INTRO_MESSAGE="Welcome to my SD card image helper. It is intended to help people create custom, runnable SD card images for Allwinner tablets which use Debian GNU/Linux and whatever the very barest minimum number of binary/opaque firmwares as possible. Currently I'm using it to build images for one Allwinner A33 based tablet, but as long as you have a u-boot and a kernel, you can adapt it to make it work for your tablet by compiling your kernel with:
+
+    make deb-pkg
+
+and placing the
+
+    u-boot-sunxi-with-spl.bin
+
+into the folder with this script before running the script. That's the quick-and dirty guide, anyway.
+
+Anyway, as you run this script interactively, you'll be presented with dialogs that are intended to be similar to installing Debian in text-mode(curses, like this https://en.wikipedia.org/wiki/File:Linux-menuconfig.png) and in interactive mode, it exists solely to ask you questions you can more-or-less answer. So let's get started. "
+export UMOUNT_MESSAGE="Unmounting partitions in chroot folder to remove temporary files and existing files."
+export FOLDER_MESSAGE="Deleting and recreating files and folders. This will remove the files in $DISK_NAME"
+export IMGGEN_MESSAGE="Generating a an empty region to use for our virtual disk. $DISK_SIZE"
+export UBOOT_MESSAGE="Flashing das u-boot to the first part of the image created by the loopback device. This will line up with the fist part of the SD card you eventually flash this img to."
+export PARTITION_MESSAGE="Generating partitions for the Operating System and Boot Region. "
+export MOUNT_MESSAGE="Formatting and Mounting OS Partition and Boot Region."
+export CONFIG_BOOT="Configuring boot-time options. This generates the u-boot configuration script."
+export INSTALL_SYSTEM="Installing Base System. The following custom packages will be installed according to the variable \$PACK_LIST. $PACK_LIST"
+export USERCFG_MESSAGE="Configuring your User. This is a non-root user you can log-in as."
+
+[ -z "$CODENAME" ] && exit 1
+[ -z "$BUILDDIR" ] && exit 1
+
+print_the_env
+
+dialog --title "$PROGRAM_TITLE" --msgbox "$INTRO_MESSAGE" 30 78
+dialog --title "$PROGRAM_TITLE" --msgbox "$UMOUNT_MESSAGE" 30 78
+unmount_working_dirs
+dialog --title "$PROGRAM_TITLE" --msgbox "$FOLDER_MESSAGE" 30 78
+recreate_working_dirs
+dialog --title "$PROGRAM_TITLE" --msgbox "$IMGGEN_MESSAGE" 30 78
+if [ -z "$DISTRO_NAME" ]; then
+        export DISTRO_NAME=$(dialog --title "$PROGRAM_TITLE" --inputbox "Enter a name for your device." 30 78 3>&1 1>&2 2>&3) && HOSTNAME="$DISTRO_NAME"
+fi
+create_empty_disk_image 2> zeroimage.err
+dialog --title "$PROGRAM_TITLE" --msgbox "$UBOOT_MESSAGE" 30 78
+if [ -z "$UBOOTBIN" ]; then
+        export UBOOTBIN=$(dialog --title "$PROGRAM_TITLE" --inputbox "Where is your u-boot with SPL file?" 30 78 3>&1 1>&2 2>&3)
+
+fi
+if [ -z "$DTFILE" ]; then
+        export DTFILE=$(dialog --title "$PROGRAM_TITLE" --inputbox "Where is your device tree file?" 30 78 3>&1 1>&2 2>&3)
+        export DTBIN="$CWD/$DTFILE"
+fi
+write_uboot_to_first
+dialog --title "$PROGRAM_TITLE" --msgbox "$PARTITION_MESSAGE" 30 78
+create_partitions_for_image
+dialog --title "$PROGRAM_TITLE" --msgbox "$MOUNT_MESSAGE" 30 78
+setup_partitions_for_image
+dialog --title "$PROGRAM_TITLE" --msgbox "$CONFIG_BOOT" 30 78
+setup_boot_partition
+dialog --title "$PROGRAM_TITLE" --msgbox "$INSTALL_SYSTEM" 30 78
+if [ -z "$USERNAME" ]; then
+        export USERNAME=$(dialog --title "$PROGRAM_TITLE" --inputbox "What would you like your username to be?" 30 78 3>&1 1>&2 2>&3)
+fi
+if [ -z "$PASSWORD" ]; then
+        export PASSWORD=$(dialog --title "$PROGRAM_TITLE" --passwordbox "Set a password for your user" 30 78 3>&1 1>&2 2>&3)
+fi
+dialog --title "$PROGRAM_TITLE" --msgbox "$INSTALL_SYSTEM" 30 78
+setup_system_partition
+dialog --title "$PROGRAM_TITLE" --msgbox "$USERCFG_MESSAGE $USERNAME" 30 78
+setup_user
+
+print_the_env
+

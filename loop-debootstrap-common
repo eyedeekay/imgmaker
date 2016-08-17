@@ -1,0 +1,210 @@
+#! /bin/sh
+
+if [ -f "$PACK_LIST" ]; then
+        TEMP="$PACK_LIST"
+        export PACK_LIST=$(cat "$TEMP")
+fi
+
+print_the_env(){
+        echo "cwd                $CWD"
+        echo "username           $USERNAME"
+        echo "distro name        $DISTRO_NAME"
+        echo "host name          $HOSTNAME"
+        echo "package list       $PACK_LIST"
+        echo "version name       $VERSION_NAME"
+        echo "disk size          $DISK_SIZE"
+        echo "disk name          $DISK_NAME"
+        echo "uboot name         $UBOOTBIN"
+        echo "device tree        $DTFILE"
+        echo "debian codename    $CODENAME"
+        echo "kernel directory   $KRNDIR"
+        echo "firmware directory $FWDIR"
+        echo "zimage location    $ZIMAGE"
+        echo "device tree path   $DTBIN"
+        echo "boot directory     $MNTDIR"
+        echo "build directory    $BUILDDIR"
+        echo "apt directory      $APTDIR"
+        echo "apt repos          $SRCDIR"
+        echo "apt preferences    $PRFDIR"
+        echo "apt trusted repos  $TRTDIR"
+        echo "apt conf directory $CNFDIR"
+        echo "uboot path         $UBOOT_PATH"
+}
+
+unmount_working_dirs(){
+        [ -d $BUILDDIR/dev ] && sudo umount -d $BUILDDIR/dev/pts
+        [ -d $BUILDDIR/dev ] && sudo umount -d $BUILDDIR/dev
+        [ -d $BUILDDIR/proc ] && sudo umount -d $BUILDDIR/proc
+	[ -d $BUILDDIR/proc ] && sudo chroot $BUILDDIR umount /proc
+        [ -d $BUILDDIR/sys ] && sudo umount -d $BUILDDIR/sys
+        [ -d $BUILDDIR ] && sudo umount -d $BUILDDIR
+        [ -d $MNTDIR ] && sudo umount -d $MNTDIR
+        [ -f /dev/loop0p1 ] && sudo umount -d /dev/loop0p1
+        [ -f /dev/loop0p2 ] && sudo umount -d /dev/loop0p2
+        sudo losetup -d /dev/loop2
+	sudo losetup -d /dev/loop1
+	sudo losetup -d /dev/loop0
+	sudo losetup -D
+}
+
+recreate_working_dirs(){
+        sudo rm -rf $BUILDDIR $MNTDIR $CWD/sdbuild-* $CWD/*.img
+        rm -rf $CWD/*.log* $CWD/*.err*
+        sudo mkdir -p $BUILDDIR $MNTDIR
+}
+
+create_empty_disk_image(){
+        if [ ! -f $CWD/$$DISK_NAME.img ]; then
+#                dd if=/dev/zero | pv -pert | dd of=$CWD/$DISK_NAME.img bs=1024 count=7600000
+                dd if=/dev/zero | pv -pert | dd of=$CWD/$DISK_NAME.img bs=1024 count=$DISK_SIZE
+                sudo losetup /dev/loop0 $CWD/$DISK_NAME.img
+        fi
+}
+
+write_uboot_to_first(){
+        sudo dd if=$UBOOT_PATH of=/dev/loop0 bs=1024 seek=8 && echo "wrote $UBOOT_PATH"
+}
+
+create_partitions_for_image(){
+        echo "o
+n
+p
+1
+2048
++16M
+n
+p
+2
+34816
+
+a
+1
+p
+w" | sudo fdisk /dev/loop0
+}
+
+setup_partitions_for_image(){
+        sudo partprobe
+        sudo losetup -o 1048576 --sizelimit 17825792 /dev/loop1 /dev/loop0
+        sudo losetup -o 17825792 /dev/loop2 /dev/loop0
+
+        sudo mkfs.vfat /dev/loop1
+        sudo mount -t vfat /dev/loop1 $MNTDIR
+
+        sudo mkfs.ext4 /dev/loop2
+        sudo mount -t ext4 /dev/loop2 $BUILDDIR
+}
+
+setup_boot_partition(){
+        echo "fatload mmc 0 0x46000000 zImage
+fatload mmc 0 0x49000000 $DTFILE
+setenv bootargs console=tty1,115200 earlyprintk root=/dev/mmcblk0p2 rootwait panic=10
+bootz 0x46000000 - 0x49000000
+" | tee $CWD/boot.cmd
+        mkimage -C none -A arm -T script -d boot.cmd boot.scr
+        sudo mv $CWD/boot.scr $MNTDIR/
+        sudo cp $ZIMAGE $MNTDIR
+        sudo cp $DTBIN $MNTDIR
+        rm $CWD/boot.cmd
+}
+
+
+setup_system_partition(){
+        export LANG=C
+        export LANG=en_US.UTF-8
+        sudo qemu-debootstrap --include=debconf,locales,apt-transport-https,apt-transport-tor,devuan-keyring,debian-archive-keyring,keychain,wget,curl,ca-certificates --arch=armhf $CODENAME $BUILDDIR http://us.mirror.devuan.org/merged/
+        #sudo umount $BUILDDIR/proc
+	#sudo mount --bind /dev $BUILDDIR/dev
+	#sudo chroot $BUILDDIR mount proc /proc -t proc
+        #sudo mount -t proc --bind /proc $BUILDDIR/proc
+        sudo mount --bind /dev/pts $BUILDIR/dev/pts
+	#sudo mount --bind /sys $BUILDDIR/sys
+        sudo cp /etc/resolv.conf $BUILDDIR/etc/resolv.conf
+        sudo mkdir -p $PRFDIR
+        sudo mkdir -p $CNFDIR
+        sudo mkdir -p $TRTDIR
+        sudo chroot $BUILDDIR dpkg-reconfigure locales
+        for i in $(find $HOOKDIR -name *.d.sh); do
+                . $i > $i.log
+        done
+        sudo cp $KRNDIR/*.deb $BUILDDIR/home
+        sudo chroot $BUILDDIR bash -c 'dpkg -i /home/*.deb'
+        sudo chroot $BUILDDIR apt-get install -t sid e2fsprogs e2fsck-static xserver-xorg-input-multitouch x11-touchscreen-calibrator gsl1680 xdm -y
+	sudo chroot $BUILDDIR dpkg-reconfigure xdm
+        sudo chroot $BUILDDIR apt-get install $PACK_LIST -y
+
+        echo "
+        none            /tmp        tmpfs   defaults,noatime,mode=1777        0       0
+        /dev/mmcblk0p1  /           ext4    relatime,errors=remount-ro        0       0
+        " | sudo tee -a $BUILDDIR/etc/fstab
+
+        echo "
+        127.0.0.1 localhost
+        127.0.1.1 $HOSTNAME
+
+        # The following lines are desirable for IPv6 capable hosts
+        ::1     ip6-localhost ip6-loopback
+        fe00::0 ip6-localnet
+        ff00::0 ip6-mcastprefix
+        ff02::1 ip6-allnodes
+        ff02::2 ip6-allrouters
+        ff02::3 ip6-allhosts
+        " | sudo tee $BUILDDIR/etc/hosts
+
+        echo "
+        ######################################################################
+        # /etc/network/interfaces -- configuration file for ifup(8), ifdown(8)
+        # See the interfaces(5) manpage for information on what options are
+        # available.
+        ######################################################################
+
+        # We always want the loopback interface.
+        #
+        auto lo
+        iface lo inet loopback
+
+        # To use dhcp:
+        #
+        # auto eth0
+        # iface eth0 inet dhcp
+
+        # An example static IP setup: (broadcast and gateway are optional)
+        #
+        # auto eth0
+        # iface eth0 inet static
+        #     address 192.168.0.42
+        #     network 192.168.0.0
+        #     netmask 255.255.255.0
+        #     broadcast 192.168.0.255
+        #     gateway 192.168.0.1
+
+        auto wlan
+        iface wlan0 inet dhcp
+
+        # An example static IP setup: (broadcast and gateway are optional)
+        #
+        # auto wlan0
+        # iface wlan0 inet static
+        #     address 192.168.0.42
+        #     network 192.168.0.0
+        #     netmask 255.255.255.0
+        #     broadcast 192.168.0.255
+        #     gateway 192.168.0.1
+        " | sudo tee $BUILDDIR/etc/network/interfaces
+        echo "export HOME=/root
+/usr/X11/bin/xvkbd -xdm -geometry 1024x300+0+300 & " | sudo tee -a $BUILDDIR/etc/X11/xdm/Xsetup
+        echo "/usr/bin/pkill xvkbd & " | sudo tee -a $BUILDDIR/etc/X11/xdm/Xstartup
+        sudo mkdir -p $BUILDDIR/lib/firmware
+        sudo cp $FWDIR/*.fw $BUILDDIR/lib/firmware
+        echo "$HOSTNAME" | sudo tee $BUILDDIR/etc/hostname
+}
+
+setup_user(){
+        sudo chroot $BUILDDIR adduser --disabled-password --shell /bin/dash --home /home/$USERNAME $USERNAME
+        sudo chroot $BUILDDIR bash -c "echo $USERNAME:$PASSWORD | chpasswd"
+        echo "
+        /usr/X11/bin/xvkbd -geometry 1024x300+0+300 &
+        " | tee -a $BUILDDIR/home/$USERNAME/.xsession
+        sudo chroot $BUILDDIR apt-get update
+        sudo chroot $BUILDDIR apt-get dist-upgrade -y
+}

@@ -1,0 +1,12 @@
+#! /bin/sh
+#This scipt searches for files larger than 100mb under the working directory and removes
+#them from git automatically using git filter-branch. This makes it kind of dangerous,
+#but also automatic and pretty useful.
+
+WORKING_DIR=$(pwd)
+
+for file in $(find "$WORKING_DIR" -path ./sdbuild-devuan -prune -o -name devuan-20160816.img -ls | grep -v ".git"); do
+  git filter-branch --index-filter "git rm -rf --cached --ignore-unmatch $file" HEAD
+  rm -rf .git/refs/original/ && git reflog expire --all &&  git gc --aggressive --prune
+done
+

@@ -1,0 +1,10 @@
+#! /bin/sh
+write_mmc(){
+	IMG="$1"
+	[ -z "$IMG" ] && IMG=$(ls *.img)
+	dd if=$IMG | pv -s `du -bc $IMG | cut -f 1 --output-delimiter=" " | head -1` | sudo dd of=/dev/mmcblk0 
+}
+
+alias write-mmc="write_mmc $@"
+
+[ -z "$1" ] && write-mmc "$@"

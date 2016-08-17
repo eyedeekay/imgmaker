@@ -1,0 +1,8 @@
+#! /bin/sh
+write_zero(){
+	dd if=/dev/zero | pv | sudo dd of=/dev/mmcblk0 
+}
+
+alias write-zero="write_zero $@"
+
+[ -z "$1" ] && write-zero "$@"
