@@ -126,7 +126,7 @@ setup_system_partition(){
         export LANG=en_US.UTF-8
         sudo qemu-debootstrap --include=$DEFPACKAGES --arch=armhf $CODENAME $BUILDDIR $SYSTEM_MIRROR
         #sudo umount $BUILDDIR/proc
-	sudo mount --bind /dev $BUILDDIR/dev
+	#sudo mount -t  dev --bind /dev $BUILDDIR/dev
 	#sudo chroot $BUILDDIR mount proc /proc -t proc
         sudo mount -t proc --bind /proc $BUILDDIR/proc
         sudo mount --bind /dev/pts $BUILDIR/dev/pts
@@ -136,7 +136,7 @@ setup_system_partition(){
         sudo mkdir -p $CNFDIR
         sudo mkdir -p $TRTDIR
         sudo chroot $BUILDDIR apt-get update
-        sudo chroot $BUILDDIR apt-get dist-upgrade -y
+        sudo chroot $BUILDDIR apt-get dist-upgrade -yq
         sudo chroot $BUILDDIR /bin/bash -c "debconf-set-selections <<< 'locales locales/default_environment_locale select $DEFAULT_LOCALE'"
         sudo chroot $BUILDDIR rm -fv /etc/default/locale
         sudo chroot $BUILDDIR dpkg-reconfigure -frontend=noninteractive locales
@@ -144,14 +144,14 @@ setup_system_partition(){
                 . $i > $i.log
         done
         sudo chroot $BUILDDIR apt-get update
-        sudo chroot $BUILDDIR apt-get dist-upgrade -y
+        sudo chroot $BUILDDIR apt-get dist-upgrade -yq
         sudo cp $KRNDIR/*.deb $BUILDDIR/home
         sudo chroot $BUILDDIR bash -c 'dpkg -i /home/*.deb'
         sudo chroot $BUILDDIR apt-get update
-        sudo chroot $BUILDDIR apt-get install -t sid e2fsprogs e2fsck-static xserver-xorg-input-multitouch x11-touchscreen-calibrator xdm -y
-        sudo chroot $BUILDDIR apt-get install gsl1680 -y
+        sudo chroot $BUILDDIR apt-get install -t sid e2fsprogs e2fsck-static xserver-xorg-input-multitouch x11-touchscreen-calibrator xdm -yq
+        sudo chroot $BUILDDIR apt-get install gsl1680 -yq
 	sudo chroot $BUILDDIR dpkg-reconfigure xdm
-        sudo chroot $BUILDDIR apt-get install $PACK_LIST -y
+        sudo chroot $BUILDDIR apt-get install $PACK_LIST -yq
 
         echo "
         none            /tmp        tmpfs   defaults,noatime,mode=1777        0       0
