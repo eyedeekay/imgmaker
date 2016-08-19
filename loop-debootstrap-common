@@ -124,7 +124,7 @@ bootz 0x46000000 - 0x49000000
 setup_system_partition(){
         export LANG=C
         export LANG=en_US.UTF-8
-        sudo qemu-debootstrap --include=debconf,locales,apt-transport-https,apt-transport-tor,devuan-keyring,debian-archive-keyring,keychain,wget,curl,ca-certificates --arch=armhf $CODENAME $BUILDDIR http://us.mirror.devuan.org/merged/
+        sudo qemu-debootstrap --include=$DEFPACKAGES --arch=armhf $CODENAME $BUILDDIR $SYSTEM_MIRROR
         #sudo umount $BUILDDIR/proc
 	sudo mount --bind /dev $BUILDDIR/dev
 	#sudo chroot $BUILDDIR mount proc /proc -t proc
@@ -137,7 +137,9 @@ setup_system_partition(){
         sudo mkdir -p $TRTDIR
         sudo chroot $BUILDDIR apt-get update
         sudo chroot $BUILDDIR apt-get dist-upgrade -y
-        sudo chroot $BUILDDIR dpkg-reconfigure locales
+        sudo chroot $BUILDDIR /bin/bash -c "debconf-set-selections <<< 'locales locales/default_environment_locale select $DEFAULT_LOCALE'"
+        sudo chroot $BUILDDIR rm -fv /etc/default/locale
+        sudo chroot $BUILDDIR dpkg-reconfigure -frontend=noninteractive locales
         for i in $(find $HOOKDIR -name *.d.sh); do
                 . $i > $i.log
         done
