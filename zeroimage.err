@@ -1,4 +1,0 @@
-dd: warning: partial read (512 bytes); suggest iflag=fullblock
-3796120+3880 records in
-3796120+3880 records out
-3889213440 bytes (3.9 GB, 3.6 GiB) copied, 7.21353 s, 539 MB/s

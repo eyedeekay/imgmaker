@@ -60,7 +60,7 @@ unmount_working_dirs(){
 }
 
 recreate_working_dirs(){
-        sudo rm -rf $BUILDDIR $MNTDIR $CWD/sdbuild-* $CWD/*.img
+        sudo rm -rf $BUILDDIR $MNTDIR $CWD/sdbuild-* $CWD/*.img $CWD/*.img.last
         rm -rf $CWD/*.log* $CWD/*.err*
         sudo mkdir -p $BUILDDIR $MNTDIR
 }
@@ -68,7 +68,7 @@ recreate_working_dirs(){
 create_empty_disk_image(){
         if [ ! -f $CWD/$$DISK_NAME.img ]; then
 #                dd if=/dev/zero | pv -pert | dd of=$CWD/$DISK_NAME.img bs=1024 count=7600000
-                dd if=/dev/zero | pv -pert | dd of=$CWD/$DISK_NAME.img bs=1024 count=$DISK_SIZE
+                dd if=/dev/zero | pv -pert | dd of=$CWD/$DISK_NAME.img bs=512 count=$DISK_SIZE
                 sudo losetup /dev/loop0 $CWD/$DISK_NAME.img
         fi
 }
@@ -116,7 +116,7 @@ bootz 0x46000000 - 0x49000000
         mkimage -C none -A arm -T script -d boot.cmd boot.scr
         sudo mv $CWD/boot.scr $MNTDIR/
         sudo cp $ZIMAGE $MNTDIR
-        sudo cp $DTBIN $MNTDIR
+        sudo cp -v $DTBIN $MNTDIR
         rm $CWD/boot.cmd
 }
 
@@ -126,26 +126,28 @@ setup_system_partition(){
         export LANG=en_US.UTF-8
         sudo qemu-debootstrap --include=debconf,locales,apt-transport-https,apt-transport-tor,devuan-keyring,debian-archive-keyring,keychain,wget,curl,ca-certificates --arch=armhf $CODENAME $BUILDDIR http://us.mirror.devuan.org/merged/
         #sudo umount $BUILDDIR/proc
-	#sudo mount --bind /dev $BUILDDIR/dev
+	sudo mount --bind /dev $BUILDDIR/dev
 	#sudo chroot $BUILDDIR mount proc /proc -t proc
-        #sudo mount -t proc --bind /proc $BUILDDIR/proc
+        sudo mount -t proc --bind /proc $BUILDDIR/proc
         sudo mount --bind /dev/pts $BUILDIR/dev/pts
-	#sudo mount --bind /sys $BUILDDIR/sys
+	sudo mount --bind /sys $BUILDDIR/sys
         sudo cp /etc/resolv.conf $BUILDDIR/etc/resolv.conf
         sudo mkdir -p $PRFDIR
         sudo mkdir -p $CNFDIR
         sudo mkdir -p $TRTDIR
+        sudo chroot $BUILDDIR apt-get update
+        sudo chroot $BUILDDIR apt-get dist-upgrade -y
         sudo chroot $BUILDDIR dpkg-reconfigure locales
         for i in $(find $HOOKDIR -name *.d.sh); do
                 . $i > $i.log
         done
         sudo chroot $BUILDDIR apt-get update
         sudo chroot $BUILDDIR apt-get dist-upgrade -y
-        sudo chroot $BUILDDIR apt-get update
-        sudo chroot $BUILDDIR apt-get dist-upgrade -y
         sudo cp $KRNDIR/*.deb $BUILDDIR/home
         sudo chroot $BUILDDIR bash -c 'dpkg -i /home/*.deb'
-        sudo chroot $BUILDDIR apt-get install -t sid e2fsprogs e2fsck-static xserver-xorg-input-multitouch x11-touchscreen-calibrator gsl1680 xdm -y
+        sudo chroot $BUILDDIR apt-get update
+        sudo chroot $BUILDDIR apt-get install -t sid e2fsprogs e2fsck-static xserver-xorg-input-multitouch x11-touchscreen-calibrator xdm -y
+        sudo chroot $BUILDDIR apt-get install gsl1680 -y
 	sudo chroot $BUILDDIR dpkg-reconfigure xdm
         sudo chroot $BUILDDIR apt-get install $PACK_LIST -y
 
@@ -208,10 +210,11 @@ setup_system_partition(){
         #     gateway 192.168.0.1
         " | sudo tee $BUILDDIR/etc/network/interfaces
         echo "export HOME=/root
-/usr/X11/bin/xvkbd -xdm -geometry 1024x300+0+300 & " | sudo tee -a $BUILDDIR/etc/X11/xdm/Xsetup
+/usr/bin/xvkbd -xdm -geometry 1024x300+0+300 & " | sudo tee -a $BUILDDIR/etc/X11/xdm/Xsetup
         echo "/usr/bin/pkill xvkbd & " | sudo tee -a $BUILDDIR/etc/X11/xdm/Xstartup
         sudo mkdir -p $BUILDDIR/lib/firmware
-        sudo cp $FWDIR/*.fw $BUILDDIR/lib/firmware
+        sudo cp -Rv $FWDIR/* $BUILDDIR/lib/firmware
+        sudo chroot $BUILDDIR update-rc.d igslx680 defaults
         echo "$HOSTNAME" | sudo tee $BUILDDIR/etc/hostname
 }
 
