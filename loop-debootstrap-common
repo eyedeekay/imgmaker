@@ -139,9 +139,10 @@ setup_system_partition(){
         sudo chroot $BUILDDIR apt-get dist-upgrade -yq
         sudo chroot $BUILDDIR /bin/bash -c "debconf-set-selections <<< 'locales/locales_to_be_generated: en_US.UTF-8 UTF-8 $GENERATE_LOCALE'"
         sudo chroot $BUILDDIR /bin/bash -c "debconf-set-selections <<< 'locales locales/default_environment_locale select $DEFAULT_LOCALE'"
-        sudo chroot $BUILDDIR /bin/bash -c "debcond-set-selections <<< 'keyboard-configuration/variant: $KEYBOARD_LOCALE'"
+        sudo chroot $BUILDDIR /bin/bash -c "debconf-set-selections <<< 'keyboard-configuration/variant: $KEYBOARD_LOCALE'"
         sudo chroot $BUILDDIR rm -fv /etc/default/locale
         sudo chroot $BUILDDIR dpkg-reconfigure -frontend=noninteractive locales
+        sudo chroot $BUILDDIR dpkg-reconfigure -frontend=noninteractive keyboard-configuration
         for i in $(find $HOOKDIR -name *.d.sh); do
                 . $i > $i.log
         done
