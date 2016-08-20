@@ -128,9 +128,11 @@ setup_system_partition(){
         #sudo umount $BUILDDIR/proc
 	#sudo mount -t  dev --bind /dev $BUILDDIR/dev
         sudo chroot $BUILDDIR mount proc /proc -t proc
-        sudo mount -t devtmpfs chdev $BUILDDIR/dev || sudo mount --bind /dev $BUILDDIR/dev
-	sudo mount --bind chpts $BUILDIR/dev/pts -t devpts
-	sudo mount --bind chsys $BUILDDIR/sys -t sysfs
+        #rm -rf $CWD/sdpts $CWD/sdsys $CWD/sddev
+        #mkdir $CWD/sdpts $CWD/sdsys $CWD/sddev
+        #sudo mount -t devtmpfs $CWD/sddev $BUILDDIR/dev || sudo mount --bind /dev $BUILDDIR/dev
+	#sudo mount --bind $CWD/chpts $BUILDIR/dev/pts -t devpts
+	#sudo mount --bind $CWD/chsys $BUILDDIR/sys -t sysfs
         sudo cp /etc/resolv.conf $BUILDDIR/etc/resolv.conf
         sudo mkdir -p $PRFDIR
         sudo mkdir -p $CNFDIR
@@ -139,10 +141,9 @@ setup_system_partition(){
         sudo chroot $BUILDDIR apt-get dist-upgrade -yq
         sudo chroot $BUILDDIR /bin/bash -c "debconf-set-selections <<< 'locales/locales_to_be_generated: en_US.UTF-8 UTF-8 $GENERATE_LOCALE'"
         sudo chroot $BUILDDIR /bin/bash -c "debconf-set-selections <<< 'locales locales/default_environment_locale select $DEFAULT_LOCALE'"
-        sudo chroot $BUILDDIR /bin/bash -c "debconf-set-selections <<< 'keyboard-configuration/variant: $KEYBOARD_LOCALE'"
         sudo chroot $BUILDDIR rm -fv /etc/default/locale
         sudo chroot $BUILDDIR dpkg-reconfigure -frontend=noninteractive locales
-        sudo chroot $BUILDDIR dpkg-reconfigure -frontend=noninteractive keyboard-configuration
+
         for i in $(find $HOOKDIR -name *.d.sh); do
                 . $i > $i.log
         done
@@ -151,11 +152,12 @@ setup_system_partition(){
         sudo cp $KRNDIR/*.deb $BUILDDIR/home
         sudo chroot $BUILDDIR bash -c 'dpkg -i /home/*.deb'
         sudo chroot $BUILDDIR apt-get update
+        sudo chroot $BUILDDIR /bin/bash -c "debconf-set-selections <<< 'keyboard-configuration/variant: $KEYBOARD_LOCALE'"
         sudo chroot $BUILDDIR apt-get install -t sid e2fsprogs e2fsck-static xserver-xorg-input-multitouch x11-touchscreen-calibrator xdm -yq
         sudo chroot $BUILDDIR apt-get install gsl1680 -yq
 	sudo chroot $BUILDDIR dpkg-reconfigure xdm
         sudo chroot $BUILDDIR apt-get install $PACK_LIST -yq
-
+        sudo chroot $BUILDDIR dpkg-reconfigure -frontend=noninteractive keyboard-configuration
         echo "
         none            /tmp        tmpfs   defaults,noatime,mode=1777        0       0
         /dev/mmcblk0p1  /           ext4    relatime,errors=remount-ro        0       0
