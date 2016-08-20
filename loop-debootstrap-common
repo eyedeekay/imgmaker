@@ -124,13 +124,13 @@ bootz 0x46000000 - 0x49000000
 setup_system_partition(){
         export LANG=C
         export LANG=en_US.UTF-8
-        sudo qemu-debootstrap --include=$DEFPACKAGES --arch=armhf $CODENAME $BUILDDIR $SYSTEM_MIRROR
+        sudo qemu-debootstrap --keyring=$KEYRING --include=$DEFPACKAGES --arch=$ARCH $CODENAME $BUILDDIR $SYSTEM_MIRROR
         #sudo umount $BUILDDIR/proc
 	#sudo mount -t  dev --bind /dev $BUILDDIR/dev
-	#sudo chroot $BUILDDIR mount proc /proc -t proc
-        sudo mount -t proc --bind /proc $BUILDDIR/proc
-        sudo mount --bind /dev/pts $BUILDIR/dev/pts
-	sudo mount --bind /sys $BUILDDIR/sys
+        sudo chroot $BUILDDIR mount proc /proc -t proc
+        sudo mount -t devtmpfs chdev $BUILDDIR/dev || sudo mount --bind /dev $BUILDDIR/dev
+	sudo mount --bind chpts $BUILDIR/dev/pts -t devpts
+	sudo mount --bind chsys $BUILDDIR/sys -t sysfs
         sudo cp /etc/resolv.conf $BUILDDIR/etc/resolv.conf
         sudo mkdir -p $PRFDIR
         sudo mkdir -p $CNFDIR
@@ -220,6 +220,7 @@ setup_system_partition(){
         sudo mkdir -p $BUILDDIR/lib/firmware
         sudo cp -Rv $FWDIR/* $BUILDDIR/lib/firmware
         sudo chroot $BUILDDIR update-rc.d igslx680 defaults
+        sudo chroot $BUILDDIR update-rc.d igslx680 enable
         echo "$HOSTNAME" | sudo tee $BUILDDIR/etc/hostname
 }
 
@@ -231,4 +232,8 @@ setup_user(){
         " | tee -a $BUILDDIR/home/$USERNAME/.xsession
         sudo chroot $BUILDDIR apt-get update
         sudo chroot $BUILDDIR apt-get dist-upgrade -y
+}
+
+chroot_enter(){
+        sudo chroot $BUILDDIR
 }
