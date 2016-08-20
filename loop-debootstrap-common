@@ -108,6 +108,7 @@ setup_partitions_for_image(){
 }
 
 setup_boot_partition(){
+        sudo cp $BUILDDIR/boot/*initrd.img* $MNTDIR/
         echo "fatload mmc 0 0x46000000 zImage
 fatload mmc 0 0x49000000 $DTFILE
 setenv bootargs console=tty1,115200 earlyprintk root=/dev/mmcblk0p2 rootwait panic=10
@@ -139,11 +140,10 @@ setup_system_partition(){
         sudo mkdir -p $TRTDIR
         sudo chroot $BUILDDIR apt-get update
         sudo chroot $BUILDDIR apt-get dist-upgrade -yq
-        sudo chroot $BUILDDIR /bin/bash -c "debconf-set-selections <<< 'locales/locales_to_be_generated: en_US.UTF-8 UTF-8 $GENERATE_LOCALE'"
+        sudo chroot $BUILDDIR /bin/bash -c "debconf-set-selections <<< 'locales/locales_to_be_generated select $GENERATE_LOCALE'"
         sudo chroot $BUILDDIR /bin/bash -c "debconf-set-selections <<< 'locales locales/default_environment_locale select $DEFAULT_LOCALE'"
         sudo chroot $BUILDDIR rm -fv /etc/default/locale
         sudo chroot $BUILDDIR dpkg-reconfigure -frontend=noninteractive locales
-
         for i in $(find $HOOKDIR -name *.d.sh); do
                 . $i > $i.log
         done
@@ -151,6 +151,7 @@ setup_system_partition(){
         sudo chroot $BUILDDIR apt-get dist-upgrade -yq
         sudo cp $KRNDIR/*.deb $BUILDDIR/home
         sudo chroot $BUILDDIR bash -c 'dpkg -i /home/*.deb'
+        sudo chroot $BUILDDIR apt-get clean
         sudo chroot $BUILDDIR apt-get update
         sudo chroot $BUILDDIR /bin/bash -c "debconf-set-selections <<< 'keyboard-configuration/variant: $KEYBOARD_LOCALE'"
         sudo chroot $BUILDDIR apt-get install -t sid e2fsprogs e2fsck-static xserver-xorg-input-multitouch x11-touchscreen-calibrator xdm -yq
@@ -159,6 +160,7 @@ setup_system_partition(){
         sudo chroot $BUILDDIR apt-get clean
         #sudo chroot $BUILDDIR apt-get
         sudo chroot $BUILDDIR apt-get install $PACK_LIST -yq
+        sudo chroot $BUILDDIR apt-get clean
         sudo chroot $BUILDDIR dpkg-reconfigure -frontend=noninteractive keyboard-configuration
         echo "
         none            /tmp        tmpfs   defaults,noatime,mode=1777        0       0

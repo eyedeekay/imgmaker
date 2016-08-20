@@ -85,11 +85,6 @@ write_uboot_to_first
 create_partitions_for_image
 [ "$INTERACTIVE" = "YES" ] && dialog --title "$PROGRAM_TITLE" --msgbox "$MOUNT_MESSAGE" 30 78
 setup_partitions_for_image
-[ "$INTERACTIVE" = "YES" ] && dialog --title "$PROGRAM_TITLE" --msgbox "$CONFIG_BOOT" 30 78
-#if [ -z "$DISK_SIZE" ]; then
-#        export DISK_SIZE=$(dialog --title "$PROGRAM_TITLE" --inputbox "How big is the SD card you will be using?" 30 78 3>&1 1>&2 2>&3)
-#fi
-setup_boot_partition
 [ "$INTERACTIVE" = "YES" ] && dialog --title "$PROGRAM_TITLE" --msgbox "$INSTALL_SYSTEM" 30 78
 if [ -z "$USERNAME" ]; then
         export USERNAME=$(dialog --title "$PROGRAM_TITLE" --inputbox "What would you like your username to be?" 30 78 3>&1 1>&2 2>&3)
@@ -98,6 +93,11 @@ if [ -z "$PASSWORD" ]; then
         export PASSWORD=$(dialog --title "$PROGRAM_TITLE" --passwordbox "Set a password for your user" 30 78 3>&1 1>&2 2>&3)
 fi
 setup_system_partition
+[ "$INTERACTIVE" = "YES" ] && dialog --title "$PROGRAM_TITLE" --msgbox "$CONFIG_BOOT" 30 78
+#if [ -z "$DISK_SIZE" ]; then
+#        export DISK_SIZE=$(dialog --title "$PROGRAM_TITLE" --inputbox "How big is the SD card you will be using?" 30 78 3>&1 1>&2 2>&3)
+#fi
+setup_boot_partition
 [ "$INTERACTIVE" = "YES" ] && dialog --title "$PROGRAM_TITLE" --msgbox "$USERCFG_MESSAGE $USERNAME" 30 78
 setup_user
 SUCCESS_MESSAGE=$(success_message)
