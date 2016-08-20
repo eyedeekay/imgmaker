@@ -156,6 +156,8 @@ setup_system_partition(){
         sudo chroot $BUILDDIR apt-get install -t sid e2fsprogs e2fsck-static xserver-xorg-input-multitouch x11-touchscreen-calibrator xdm -yq
         sudo chroot $BUILDDIR apt-get install gsl1680 -yq
 	sudo chroot $BUILDDIR dpkg-reconfigure xdm
+        sudo chroot $BUILDDIR apt-get clean
+        #sudo chroot $BUILDDIR apt-get
         sudo chroot $BUILDDIR apt-get install $PACK_LIST -yq
         sudo chroot $BUILDDIR dpkg-reconfigure -frontend=noninteractive keyboard-configuration
         echo "
@@ -234,6 +236,7 @@ setup_user(){
         " | tee -a $BUILDDIR/home/$USERNAME/.xsession
         sudo chroot $BUILDDIR apt-get update
         sudo chroot $BUILDDIR apt-get dist-upgrade -y
+        sudo chroot $BUILDDIR apt-get clean
 }
 
 chroot_enter(){
