@@ -41,19 +41,19 @@ export USERCFG_MESSAGE="Configuring your User. This is a non-root user you can l
 [ -z "$BUILDDIR" ] && exit 1
 [ -z "$DISTRO_NAME" ] && INTERACTIVE="YES"
 print_the_env
+#ENTER_CHROOT="NO"
+#while getopts d:c o
+#do	case "$o" in
+#	d)	DISTRO_NAME=$OPTARG;;
+#        c)	ENTER_CHROOT="YES";;
+#	[?])	print >&2 "Usage: $0 [-s] [-d seplist] file ..."
+#		exit 1;;
+#	esac
+#done
 
-while getopts d:c o
-do	case "$o" in
-	d)	DISTRO_NAME=$OPTARG;;
-        c)	ENTER_CHROOT="YES";;
-	[?])	print >&2 "Usage: $0 [-s] [-d seplist] file ..."
-		exit 1;;
-	esac
-done
-
-if [ $ENTER_CHROOT="YES" ]; then
-        chroot_enter
-fi
+#if [ "$ENTER_CHROOT"="YES" ]; then
+#        chroot_enter
+#fi
 
 [ "$INTERACTIVE" = "YES" ] && dialog --title "$PROGRAM_TITLE" --msgbox "$INTRO_MESSAGE" 30 78
 [ "$INTERACTIVE" = "YES" ] && dialog --title "$PROGRAM_TITLE" --msgbox "$UMOUNT_MESSAGE" 30 78
