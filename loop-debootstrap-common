@@ -128,7 +128,7 @@ setup_system_partition(){
         sudo qemu-debootstrap --keyring=$KEYRING --include=$DEFPACKAGES --arch=$ARCH $CODENAME $BUILDDIR $SYSTEM_MIRROR
         #sudo umount $BUILDDIR/proc
 	#sudo mount -t  dev --bind /dev $BUILDDIR/dev
-        sudo chroot $BUILDDIR mount proc /proc -t proc
+#        sudo chroot $BUILDDIR mount proc /proc -t proc
         #rm -rf $CWD/sdpts $CWD/sdsys $CWD/sddev
         #mkdir $CWD/sdpts $CWD/sdsys $CWD/sddev
         #sudo mount -t devtmpfs $CWD/sddev $BUILDDIR/dev || sudo mount --bind /dev $BUILDDIR/dev
@@ -139,29 +139,29 @@ setup_system_partition(){
         sudo mkdir -p $CNFDIR
         sudo mkdir -p $TRTDIR
         sudo chroot $BUILDDIR apt-get update
-        sudo chroot $BUILDDIR apt-get dist-upgrade -yq
-        sudo chroot $BUILDDIR /bin/bash -c "debconf-set-selections <<< 'locales/locales_to_be_generated select $GENERATE_LOCALE'"
-        sudo chroot $BUILDDIR /bin/bash -c "debconf-set-selections <<< 'locales locales/default_environment_locale select $DEFAULT_LOCALE'"
+        sudo chroot $BUILDDIR apt-get dist-upgrade -y
+        #sudo chroot $BUILDDIR /bin/bash -c "debconf-set-selections <<< 'locales/locales_to_be_generated select $GENERATE_LOCALE'"
+        #sudo chroot $BUILDDIR /bin/bash -c "debconf-set-selections <<< 'locales locales/default_environment_locale select $DEFAULT_LOCALE'"
         sudo chroot $BUILDDIR rm -fv /etc/default/locale
-        sudo chroot $BUILDDIR dpkg-reconfigure -frontend=noninteractive locales
+        #sudo chroot $BUILDDIR dpkg-reconfigure -frontend=Noninteractive locales
         for i in $(find $HOOKDIR -name *.d.sh); do
                 . $i > $i.log
         done
         sudo chroot $BUILDDIR apt-get update
-        sudo chroot $BUILDDIR apt-get dist-upgrade -yq
+        sudo chroot $BUILDDIR apt-get dist-upgrade -y
         sudo cp $KRNDIR/*.deb $BUILDDIR/home
         sudo chroot $BUILDDIR bash -c 'dpkg -i /home/*.deb'
-        sudo chroot $BUILDDIR apt-get clean
+        #sudo chroot $BUILDDIR apt-get clean
         sudo chroot $BUILDDIR apt-get update
-        sudo chroot $BUILDDIR /bin/bash -c "debconf-set-selections <<< 'keyboard-configuration/variant: $KEYBOARD_LOCALE'"
-        sudo chroot $BUILDDIR apt-get install -t sid e2fsprogs e2fsck-static xserver-xorg-input-multitouch x11-touchscreen-calibrator xdm -yq
-        sudo chroot $BUILDDIR apt-get install gsl1680 -yq
+        #sudo chroot $BUILDDIR /bin/bash -c "debconf-set-selections <<< 'keyboard-configuration/variant: $KEYBOARD_LOCALE'"
+        sudo chroot $BUILDDIR apt-get install -t sid e2fsprogs e2fsck-static xserver-xorg-input-multitouch x11-touchscreen-calibrator xdm -y
+        sudo chroot $BUILDDIR apt-get install gsl1680 -y
 	sudo chroot $BUILDDIR dpkg-reconfigure xdm
-        sudo chroot $BUILDDIR apt-get clean
+        #sudo chroot $BUILDDIR apt-get clean
         #sudo chroot $BUILDDIR apt-get
-        sudo chroot $BUILDDIR apt-get install $PACK_LIST -yq
-        sudo chroot $BUILDDIR apt-get clean
-        sudo chroot $BUILDDIR dpkg-reconfigure -frontend=noninteractive keyboard-configuration
+        sudo chroot $BUILDDIR apt-get install $PACK_LIST -y
+        #sudo chroot $BUILDDIR apt-get clean
+        #sudo chroot $BUILDDIR dpkg-reconfigure -frontend=Noninteractive keyboard-configuration
         echo "
         none            /tmp        tmpfs   defaults,noatime,mode=1777        0       0
         /dev/mmcblk0p1  /           ext4    relatime,errors=remount-ro        0       0
@@ -238,7 +238,7 @@ setup_user(){
         " | tee -a $BUILDDIR/home/$USERNAME/.xsession
         sudo chroot $BUILDDIR apt-get update
         sudo chroot $BUILDDIR apt-get dist-upgrade -y
-        sudo chroot $BUILDDIR apt-get clean
+        #sudo chroot $BUILDDIR apt-get clean
 }
 
 chroot_enter(){
