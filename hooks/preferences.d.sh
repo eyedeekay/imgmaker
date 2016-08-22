@@ -1,16 +1,19 @@
 echo "
+Package: linux-*
+Pin: release a=rolling
+Pin-Priority: 910
 Package: *
 Pin: release a=stable
 Pin-Priority: 700
 Package: *
 Pin: release a=testing
-Pin-Priority: 650
+Pin-Priority: 250
 Package: *
 Pin: release a=unstable
-Pin-Priority: 300
+Pin-Priority: 200
 Package: *
 Pin: release a=nightly
-Pin-Priority: 200
+Pin-Priority: 100
 " | sudo tee $PRFDIR/be-stable
 
 echo "Package: systemd
