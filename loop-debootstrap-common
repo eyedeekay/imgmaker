@@ -67,14 +67,13 @@ recreate_working_dirs(){
 
 create_empty_disk_image(){
         if [ ! -f $CWD/$$DISK_NAME.img ]; then
-#                dd if=/dev/zero | pv -pert | dd of=$CWD/$DISK_NAME.img bs=1024 count=7600000
-                dd if=/dev/zero | pv -pert | dd of=$CWD/$DISK_NAME.img bs=512 count=$DISK_SIZE 1> logs/2zeroimgage.log logs/ 2> logs/2zeroimage.err
-                sudo losetup /dev/loop0 $CWD/$DISK_NAME.img 1> logs/21mountloop.log 2> logs/21mountloop.err
+                dd if=/dev/zero | pv -pert | dd of=$CWD/$DISK_NAME.img bs=512 count=$DISK_SIZE
+                sudo losetup /dev/loop0 $CWD/$DISK_NAME.img 1> logs/20loopset.log 2> logs/20loopset.err
         fi
 }
 
 write_uboot_to_first(){
-        sudo dd if=$UBOOT_PATH of=/dev/loop0 bs=1024 seek=8 && echo "wrote $UBOOT_PATH" 1> logs/3writeuboot.log 2> logs/3writeuboot.err
+        sudo dd if=$UBOOT_PATH of=/dev/loop0 bs=1024 seek=8 && echo "wrote $UBOOT_PATH" 1> logs/30writeuboot.log 2> logs/30writeuboot.err
 }
 
 create_partitions_for_image(){
@@ -97,10 +96,10 @@ w" | sudo fdisk /dev/loop0
 
 setup_partitions_for_image(){
         sudo partprobe
-        sudo losetup -o 1048576 --sizelimit 17825792 /dev/loop1 /dev/loop0 1> logs/40loop1.log 2> logs/40loop1.log
-        sudo losetup -o 17825792 /dev/loop2 /dev/loop0 1> logs/40loop2.log 2> logs/40loop2.log
+        sudo losetup -o 1048576 --sizelimit 17825792 /dev/loop1 /dev/loop0 1> logs/40loop1.log 2> logs/40loop1.err
+        sudo losetup -o 17825792 /dev/loop2 /dev/loop0 1> logs/40loop2.log 2> logs/40loop2.err
 
-        sudo mkfs.vfat /dev/loop1 1> logs/41bootfs.log 2> logs/bootfs.err
+        sudo mkfs.vfat /dev/loop1 1> logs/41bootfs.log 2> logs/41bootfs.err
         sudo mount -t vfat /dev/loop1 $MNTDIR 1> logs/41bootmount.log 2> logs/41bootmount.err
 
         sudo mkfs.ext4 /dev/loop2 1> logs/42rootfs.log 2> logs/42rootfs.err
@@ -109,6 +108,7 @@ setup_partitions_for_image(){
 
 setup_boot_partition(){
         sudo cp $BUILDDIR/boot/*initrd.img* $MNTDIR/
+        INITRD_TMP=$(ls $MNTDIR/*initrd.img)
         echo "fatload mmc 0 0x45000000 zImage
 fatload mmc 0 0x49000000 $DTFILE
 setenv bootargs console=tty1,115200 earlyprintk root=/dev/mmcblk0p2 rootwait panic=10
