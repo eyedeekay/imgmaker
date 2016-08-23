@@ -102,7 +102,11 @@ setup_partitions_for_image(){
         sudo mkfs.vfat /dev/loop1 1> logs/41bootfs.log 2> logs/41bootfs.err
         sudo mount -t vfat /dev/loop1 $MNTDIR 1> logs/41bootmount.log 2> logs/41bootmount.err
 
-        sudo mkfs.ext4 -O ^64bit /dev/loop2 1> logs/42rootfs.log 2> logs/42rootfs.err
+        if [ "$IMGMAKER_ARCH_SUPPORTS_64FS" = "YES" ]; then
+                sudo mkfs.ext4 /dev/loop2 1> logs/42rootfs64.log 2> logs/42rootfs64.err
+        else
+                sudo mkfs.ext4 -O ^64bit /dev/loop2 1> logs/42rootfs.log 2> logs/42rootfs.err
+        fi
         sudo mount -t ext4 /dev/loop2 $BUILDDIR 1> logs/42rootfs.log 2> logs/42rootfs.err
 }
 
