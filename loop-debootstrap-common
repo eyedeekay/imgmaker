@@ -102,23 +102,8 @@ setup_partitions_for_image(){
         sudo mkfs.vfat /dev/loop1 1> logs/41bootfs.log 2> logs/41bootfs.err
         sudo mount -t vfat /dev/loop1 $MNTDIR 1> logs/41bootmount.log 2> logs/41bootmount.err
 
-        sudo mkfs.ext4 /dev/loop2 1> logs/42rootfs.log 2> logs/42rootfs.err
+        sudo mkfs.ext4 -O ^64bit /dev/loop2 1> logs/42rootfs.log 2> logs/42rootfs.err
         sudo mount -t ext4 /dev/loop2 $BUILDDIR 1> logs/42rootfs.log 2> logs/42rootfs.err
-}
-
-setup_boot_partition(){
-        sudo cp $BUILDDIR/boot/*initrd.img* $MNTDIR/
-        INITRD_TMP=$(ls $MNTDIR/*initrd.img)
-        echo "fatload mmc 0 0x45000000 zImage
-fatload mmc 0 0x49000000 $DTFILE
-setenv bootargs console=tty1,115200 earlyprintk root=/dev/mmcblk0p2 rootwait panic=10
-bootz 0x45000000 - 0x49000000
-" | tee $CWD/boot.cmd
-        mkimage -C none -A arm -T script -d boot.cmd boot.scr
-        sudo mv $CWD/boot.scr $MNTDIR/
-        sudo cp $ZIMAGE $MNTDIR
-        sudo cp -v $DTBIN $MNTDIR
-        rm $CWD/boot.cmd
 }
 
 
@@ -228,6 +213,22 @@ setup_system_partition(){
         sudo chroot $BUILDDIR update-rc.d igslx680 defaults
         sudo chroot $BUILDDIR update-rc.d igslx680 enable
         echo "$HOSTNAME" | sudo tee $BUILDDIR/etc/hostname
+}
+
+setup_boot_partition(){
+        sudo cp $BUILDDIR/boot/*initrd.img* $MNTDIR/
+        INITRD_TMP=$(\ls $MNTDIR/*initrd.img* | sed s_"$MNTDIR"__ | tr -d \/)
+        echo "fatload mmc 0 0x44000000 zImage
+fatload mmc 0 0x47000000 $INITRD_TMP
+fatload mmc 0 0x49000000 $DTFILE
+setenv bootargs console=tty1,115200 earlyprintk root=/dev/mmcblk0p2 rootwait panic=10
+bootz 0x44000000 0x47000000 0x49000000
+" | tee $CWD/boot.cmd
+        mkimage -C none -A arm -T script -d boot.cmd boot.scr
+        sudo mv $CWD/boot.scr $MNTDIR/
+        sudo cp $ZIMAGE $MNTDIR
+        sudo cp -v $DTBIN $MNTDIR
+        rm $CWD/boot.cmd
 }
 
 setup_user(){

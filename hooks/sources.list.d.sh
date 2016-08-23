@@ -46,6 +46,7 @@ deb-src https://cmotc.github.io/apt-now/debian rolling main
 
 echo "#! fyrix.github.io/kernels repositories
 #deb https://fyrix.github.io/kernels/debian rolling main
+deb https://fyrix.github.io/arm-kernel-frozen/debian rolling main
 deb https://fyrix.github.io/core/debian rolling main
 deb-src https://fyrix.github.io/core/debian rolling main
 #deb-src https://fyrix.github.io/kernels/debian rolling main
