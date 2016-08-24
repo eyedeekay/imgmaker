@@ -106,7 +106,7 @@ setup_partitions_for_image(){
                 exit 1
                 sudo mkfs.ext4 /dev/loop2 1> logs/42rootfs64.log 2> logs/42rootfs64.err
         else
-                echo "creating ext4 filesystem without 64 bit/Checksum support" 1> logs/42rootfsmod.log 2> logs/42rootfsmod.err
+                echo "Using mke2fs.conf at $MKE2FS_CONFIG" 1> logs/42rootfsmod.log 2> logs/42rootfsmod.err
                 sudo mkfs.ext4 -O ^64bit^metadata_csum /dev/loop2 1> logs/42rootfs.log 2> logs/42rootfs.err
         fi
         sudo mount -t ext4 /dev/loop2 $BUILDDIR 1> logs/42rootfs.log 2> logs/42rootfs.err
