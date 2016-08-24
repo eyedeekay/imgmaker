@@ -103,9 +103,11 @@ setup_partitions_for_image(){
         sudo mount -t vfat /dev/loop1 $MNTDIR 1> logs/41bootmount.log 2> logs/41bootmount.err
 
         if [ "$IMGMAKER_ARCH_SUPPORTS_64FS" = "YES" ]; then
+                exit 1
                 sudo mkfs.ext4 /dev/loop2 1> logs/42rootfs64.log 2> logs/42rootfs64.err
         else
-                sudo mkfs.ext4 -O ^64bit /dev/loop2 1> logs/42rootfs.log 2> logs/42rootfs.err
+                echo "creating ext4 filesystem without 64 bit/Checksum support" 1> logs/42rootfsmod.log 2> logs/42rootfsmod.err
+                sudo mkfs.ext4 -O ^64bit^metadata_csum /dev/loop2 1> logs/42rootfs.log 2> logs/42rootfs.err
         fi
         sudo mount -t ext4 /dev/loop2 $BUILDDIR 1> logs/42rootfs.log 2> logs/42rootfs.err
 }
@@ -149,7 +151,7 @@ setup_system_partition(){
         #sudo chroot $BUILDDIR apt-get clean
         #sudo chroot $BUILDDIR apt-get
         sudo chroot $BUILDDIR apt-get install $PACK_LIST -y
-        #sudo chroot $BUILDDIR apt-get clean
+        sudo chroot $BUILDDIR apt-get clean
         #sudo chroot $BUILDDIR dpkg-reconfigure -frontend=Noninteractive keyboard-configuration
         echo "
         none            /tmp        tmpfs   defaults,noatime,mode=1777        0       0
