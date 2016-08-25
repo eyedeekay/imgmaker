@@ -1,5 +1,0 @@
-mount: wrong fs type, bad option, bad superblock on /dev/loop2,
-       missing codepage or helper program, or other error
-
-       In some cases useful info is found in syslog - try
-       dmesg | tail or so.

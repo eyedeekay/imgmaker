@@ -14,7 +14,7 @@ print_the_env(){
         echo "version name       $IMGMAKER_VERSION_NAME"
         echo "disk size          $IMGMAKER_DISK_SIZE"
         echo "disk name          $IMGMAKER_DISK_NAME"
-        echo "uboot name         $IMGMAKER_UBOOT_BIN"
+        echo "u-boot name        $IMGMAKER_UBOOT_BIN"
         echo "device tree        $IMGMAKER_DEVICETREE_FILE"
         echo "debian codename    $IMGMAKER_CODENAME"
         echo "kernel directory   $IMGMAKER_KERNEL_DIR"
@@ -73,6 +73,7 @@ create_empty_disk_image(){
 }
 
 write_uboot_to_first(){
+        echo $IMGMAKER_UBOOT_PATH
         sudo dd if=$IMGMAKER_UBOOT_PATH of=/dev/loop0 bs=1024 seek=8 && echo "wrote $IMGMAKER_UBOOT_PATH" 1> logs/30writeuboot.log 2> logs/30writeuboot.err
 }
 
