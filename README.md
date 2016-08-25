@@ -146,11 +146,10 @@ These will be done in this order, unless something needs to be added to the
 list, in which case if I'm too tired to do it at the time I'll put it here so I
 don't forget.
 
-  * Regularize and document variable names.
-  * Add getopts
   * Execute fun-sounding /etc/skel idea!
   * Add Kernel Selection Support.
   * Add custom partitions support.
+  * Add getopts mode
   * Create more advanced way of hooking into the build process with scripts.
   * Make it possible to use more keyboards and display/login managers(right now
   only XDM and xvkbd are used)
