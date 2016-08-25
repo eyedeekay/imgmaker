@@ -2,7 +2,12 @@ imgmaker
 --------
 
 This is a script used to generate an image file containing a Debian image for a
-tablet which can be booted from an SD card.
+tablet which can be booted from an SD card. It is written the way it is for one
+specific purpose, to emulate as closely as possible the experience of installing
+Debian from a CD image on PC hardware in order to approximate a Debian, Devuan,
+or Ubuntu based GNU/Linux Image. Technically it's a little flexible on the GNU
+but it'll probably be easier to start with the standard Debian stuff which is
+frequently GNU and I personally like GNU, but do what you like with it.
 
 Please keep in mind that these readme's(And also my blog) are the notes of an
 aimless, underachieving, untrained amateur. I've tried to be detailed enough to
@@ -52,6 +57,8 @@ So, step by step
   8. Eighth, it installs custom packages in the chrooted system from a simple
   user-defined list.
   9. Ninth, it creates a user and exits the chroot.
+
+It also contains a set of functions you could include in your own script.
 
 ###How do I adapt it to support my tablet?
 

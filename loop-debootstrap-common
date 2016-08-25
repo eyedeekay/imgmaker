@@ -116,7 +116,7 @@ setup_partitions_for_image(){
 setup_system_partition(){
         export LANG=C
         export LANG=en_US.UTF-8
-        sudo qemu-debootstrap --keyring=$KEYRING --include=$DEFPACKAGES --arch=$ARCH $IMGMAKER_CODENAME $IMGMAKER_SYSTEM_DIR $SYSTEM_MIRROR
+        sudo qemu-debootstrap --keyring=$KEYRING --include=$IMGMAKER_DEFAULT_PACKAGES --arch=$ARCH $IMGMAKER_CODENAME $IMGMAKER_SYSTEM_DIR $SYSTEM_MIRROR
         #sudo umount $IMGMAKER_SYSTEM_DIR/proc
 	#sudo mount -t  dev --bind /dev $IMGMAKER_SYSTEM_DIR/dev
 #        sudo chroot $IMGMAKER_SYSTEM_DIR mount proc /proc -t proc
