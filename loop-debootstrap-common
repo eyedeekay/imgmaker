@@ -1,56 +1,56 @@
 #! /bin/sh
 
-if [ -f "$PACK_LIST" ]; then
-        TEMP="$PACK_LIST"
-        export PACK_LIST=$(cat "$TEMP")
+if [ -f "$IMGMAKER_PACK_LIST" ]; then
+        TEMP="$IMGMAKER_PACK_LIST"
+        export IMGMAKER_PACK_LIST=$(cat "$TEMP")
 fi
 
 print_the_env(){
-        echo "cwd                $CWD"
-        echo "username           $USERNAME"
-        echo "distro name        $DISTRO_NAME"
-        echo "host name          $HOSTNAME"
-        echo "package list       $PACK_LIST"
-        echo "version name       $VERSION_NAME"
-        echo "disk size          $DISK_SIZE"
-        echo "disk name          $DISK_NAME"
-        echo "uboot name         $UBOOTBIN"
-        echo "device tree        $DTFILE"
-        echo "debian codename    $CODENAME"
-        echo "kernel directory   $KRNDIR"
-        echo "firmware directory $FWDIR"
-        echo "zimage location    $ZIMAGE"
-        echo "device tree path   $DTBIN"
-        echo "boot directory     $MNTDIR"
-        echo "build directory    $BUILDDIR"
-        echo "apt directory      $APTDIR"
-        echo "apt repos          $SRCDIR"
-        echo "apt preferences    $PRFDIR"
-        echo "apt trusted repos  $TRTDIR"
-        echo "apt conf directory $CNFDIR"
-        echo "uboot path         $UBOOT_PATH"
+        echo "cwd                $IMGMAKER_CWD"
+        echo "username           $IMGMAKER_USERNAME"
+        echo "distro name        $IMGMAKER_DISTRO_NAME"
+        echo "host name          $IMGMAKER_HOSTNAME"
+        echo "package list       $IMGMAKER_PACK_LIST"
+        echo "version name       $IMGMAKER_VERSION_NAME"
+        echo "disk size          $IMGMAKER_DISK_SIZE"
+        echo "disk name          $IMGMAKER_DISK_NAME"
+        echo "uboot name         $IMGMAKER_UBOOT_BIN"
+        echo "device tree        $IMGMAKER_DEVICETREE_FILE"
+        echo "debian codename    $IMGMAKER_CODENAME"
+        echo "kernel directory   $IMGMAKER_KERNEL_DIR"
+        echo "firmware directory $IMGMAKER_FIRMWARE_DIR"
+        echo "zimage location    $IMGMAKER_ZIMAGE_PATH"
+        echo "device tree path   $IMGMAKER_DEVICETREE_PATH"
+        echo "boot directory     $IMGMAKER_BOOT_DIR"
+        echo "build directory    $IMGMAKER_SYSTEM_DIR"
+        echo "apt directory      $IMGMAKER_APT_DIR"
+        echo "apt repos          $IMGMAKER_APT_SRCS_DIR"
+        echo "apt preferences    $IMGMAKER_APT_PREF_DIR"
+        echo "apt trusted repos  $IMGMAKER_APT_TRUST_DIR"
+        echo "apt conf directory $IMGMAKER_APT_CONF_DIR"
+        echo "uboot path         $IMGMAKER_UBOOT_PATH"
 }
 
 success_message(){
-        echo "You have created an SD card image successfully in $CWD. The image
-        file is named $DISK_NAME.img.
+        echo "You have created an SD card image successfully in $IMGMAKER_CWD. The image
+        file is named $IMGMAKER_DISK_NAME.img.
 
-        Your username is $USERNAME.
-        Your device is named $HOSTNAME.
-        Your image is $DISK_SIZE bytes in size.
+        Your username is $IMGMAKER_USERNAME.
+        Your device is named $IMGMAKER_HOSTNAME.
+        Your image is $IMGMAKER_DISK_SIZE bytes in size.
 
         It was based on the $CODENAME distribution of Debian.
         "
 }
 
 unmount_working_dirs(){
-        [ -d $BUILDDIR/dev ] && sudo umount -d $BUILDDIR/dev/pts
-        [ -d $BUILDDIR/dev ] && sudo umount -d $BUILDDIR/dev
-        [ -d $BUILDDIR/proc ] && sudo umount -d $BUILDDIR/proc
-	[ -d $BUILDDIR/proc ] && sudo chroot $BUILDDIR umount /proc
-        [ -d $BUILDDIR/sys ] && sudo umount -d $BUILDDIR/sys
-        [ -d $BUILDDIR ] && sudo umount -d $BUILDDIR
-        [ -d $MNTDIR ] && sudo umount -d $MNTDIR
+        [ -d $IMGMAKER_SYSTEM_DIR/dev ] && sudo umount -d $IMGMAKER_SYSTEM_DIR/dev/pts
+        [ -d $IMGMAKER_SYSTEM_DIR/dev ] && sudo umount -d $IMGMAKER_SYSTEM_DIR/dev
+        [ -d $IMGMAKER_SYSTEM_DIR/proc ] && sudo umount -d $IMGMAKER_SYSTEM_DIR/proc
+	[ -d $IMGMAKER_SYSTEM_DIR/proc ] && sudo chroot $IMGMAKER_SYSTEM_DIR umount /proc
+        [ -d $IMGMAKER_SYSTEM_DIR/sys ] && sudo umount -d $IMGMAKER_SYSTEM_DIR/sys
+        [ -d $IMGMAKER_SYSTEM_DIR ] && sudo umount -d $IMGMAKER_SYSTEM_DIR
+        [ -d $IMGMAKER_BOOT_DIR ] && sudo umount -d $IMGMAKER_BOOT_DIR
         [ -f /dev/loop0p1 ] && sudo umount -d /dev/loop0p1
         [ -f /dev/loop0p2 ] && sudo umount -d /dev/loop0p2
         sudo losetup -d /dev/loop2
@@ -60,20 +60,20 @@ unmount_working_dirs(){
 }
 
 recreate_working_dirs(){
-        sudo rm -rf $BUILDDIR $MNTDIR $CWD/sdbuild-* $CWD/*.img $CWD/*.img.last 1> logs/1remove.log 2> logs/1remove.err
-        rm -rf $CWD/*.log* $CWD/*.err* 1> logs/11metaremove.log 2> logs/11metaremove.err
-        sudo mkdir -p $BUILDDIR $MNTDIR 1> logs/12recreate.log 2> logs/12recreate.err
+        sudo rm -rf $IMGMAKER_SYSTEM_DIR $IMGMAKER_BOOT_DIR $IMGMAKER_CWD/sdbuild-* $IMGMAKER_CWD/*.img $IMGMAKER_CWD/*.img.last 1> logs/1remove.log 2> logs/1remove.err
+        rm -rf $IMGMAKER_CWD/*.log* $IMGMAKER_CWD/*.err* 1> logs/11metaremove.log 2> logs/11metaremove.err
+        sudo mkdir -p $IMGMAKER_SYSTEM_DIR $IMGMAKER_BOOT_DIR 1> logs/12recreate.log 2> logs/12recreate.err
 }
 
 create_empty_disk_image(){
-        if [ ! -f $CWD/$$DISK_NAME.img ]; then
-                dd if=/dev/zero | pv -pert | dd of=$CWD/$DISK_NAME.img bs=512 count=$DISK_SIZE
-                sudo losetup /dev/loop0 $CWD/$DISK_NAME.img 1> logs/20loopset.log 2> logs/20loopset.err
+        if [ ! -f $IMGMAKER_CWD/$IMGMAKER_DISK_NAME.img ]; then
+                dd if=/dev/zero | pv -pert | dd of=$IMGMAKER_CWD/$IMGMAKER_DISK_NAME.img bs=512 count=$IMGMAKER_DISK_SIZE
+                sudo losetup /dev/loop0 $IMGMAKER_CWD/$IMGMAKER_DISK_NAME.img 1> logs/20loopset.log 2> logs/20loopset.err
         fi
 }
 
 write_uboot_to_first(){
-        sudo dd if=$UBOOT_PATH of=/dev/loop0 bs=1024 seek=8 && echo "wrote $UBOOT_PATH" 1> logs/30writeuboot.log 2> logs/30writeuboot.err
+        sudo dd if=$IMGMAKER_UBOOT_PATH of=/dev/loop0 bs=1024 seek=8 && echo "wrote $IMGMAKER_UBOOT_PATH" 1> logs/30writeuboot.log 2> logs/30writeuboot.err
 }
 
 create_partitions_for_image(){
@@ -100,7 +100,7 @@ setup_partitions_for_image(){
         sudo losetup -o 17825792 /dev/loop2 /dev/loop0 1> logs/40loop2.log 2> logs/40loop2.err
 
         sudo mkfs.vfat /dev/loop1 1> logs/41bootfs.log 2> logs/41bootfs.err
-        sudo mount -t vfat /dev/loop1 $MNTDIR 1> logs/41bootmount.log 2> logs/41bootmount.err
+        sudo mount -t vfat /dev/loop1 $IMGMAKER_BOOT_DIR 1> logs/41bootmount.log 2> logs/41bootmount.err
 
         if [ "$IMGMAKER_ARCH_SUPPORTS_64FS" = "YES" ]; then
                 exit 1
@@ -109,58 +109,58 @@ setup_partitions_for_image(){
                 echo "Using mke2fs.conf at $MKE2FS_CONFIG" 1> logs/42rootfsmod.log 2> logs/42rootfsmod.err
                 sudo mkfs.ext4 -O ^64bit^metadata_csum /dev/loop2 1> logs/42rootfs.log 2> logs/42rootfs.err
         fi
-        sudo mount -t ext4 /dev/loop2 $BUILDDIR 1> logs/42rootfs.log 2> logs/42rootfs.err
+        sudo mount -t ext4 /dev/loop2 $IMGMAKER_SYSTEM_DIR 1> logs/42rootfs.log 2> logs/42rootfs.err
 }
 
 
 setup_system_partition(){
         export LANG=C
         export LANG=en_US.UTF-8
-        sudo qemu-debootstrap --keyring=$KEYRING --include=$DEFPACKAGES --arch=$ARCH $CODENAME $BUILDDIR $SYSTEM_MIRROR
-        #sudo umount $BUILDDIR/proc
-	#sudo mount -t  dev --bind /dev $BUILDDIR/dev
-#        sudo chroot $BUILDDIR mount proc /proc -t proc
-        #rm -rf $CWD/sdpts $CWD/sdsys $CWD/sddev
-        #mkdir $CWD/sdpts $CWD/sdsys $CWD/sddev
-        #sudo mount -t devtmpfs $CWD/sddev $BUILDDIR/dev || sudo mount --bind /dev $BUILDDIR/dev
-	#sudo mount --bind $CWD/chpts $BUILDIR/dev/pts -t devpts
-	#sudo mount --bind $CWD/chsys $BUILDDIR/sys -t sysfs
-        sudo cp /etc/resolv.conf $BUILDDIR/etc/resolv.conf
-        sudo mkdir -p $PRFDIR
-        sudo mkdir -p $CNFDIR
-        sudo mkdir -p $TRTDIR
-        sudo chroot $BUILDDIR apt-get update
-        sudo chroot $BUILDDIR apt-get dist-upgrade -y
-        #sudo chroot $BUILDDIR /bin/bash -c "debconf-set-selections <<< 'locales/locales_to_be_generated select $GENERATE_LOCALE'"
-        #sudo chroot $BUILDDIR /bin/bash -c "debconf-set-selections <<< 'locales locales/default_environment_locale select $DEFAULT_LOCALE'"
-        sudo chroot $BUILDDIR rm -fv /etc/default/locale
-        #sudo chroot $BUILDDIR dpkg-reconfigure -frontend=Noninteractive locales
-        for i in $(find $HOOKDIR -name *.d.sh); do
+        sudo qemu-debootstrap --keyring=$KEYRING --include=$DEFPACKAGES --arch=$ARCH $IMGMAKER_CODENAME $IMGMAKER_SYSTEM_DIR $SYSTEM_MIRROR
+        #sudo umount $IMGMAKER_SYSTEM_DIR/proc
+	#sudo mount -t  dev --bind /dev $IMGMAKER_SYSTEM_DIR/dev
+#        sudo chroot $IMGMAKER_SYSTEM_DIR mount proc /proc -t proc
+        #rm -rf $IMGMAKER_CWD/sdpts $IMGMAKER_CWD/sdsys $IMGMAKER_CWD/sddev
+        #mkdir $IMGMAKER_CWD/sdpts $IMGMAKER_CWD/sdsys $IMGMAKER_CWD/sddev
+        #sudo mount -t devtmpfs $IMGMAKER_CWD/sddev $IMGMAKER_SYSTEM_DIR/dev || sudo mount --bind /dev $IMGMAKER_SYSTEM_DIR/dev
+	#sudo mount --bind $IMGMAKER_CWD/chpts $BUILDIR/dev/pts -t devpts
+	#sudo mount --bind $IMGMAKER_CWD/chsys $IMGMAKER_SYSTEM_DIR/sys -t sysfs
+        sudo cp /etc/resolv.conf $IMGMAKER_SYSTEM_DIR/etc/resolv.conf
+        sudo mkdir -p $IMGMAKER_APT_PREF_DIR
+        sudo mkdir -p $IMGMAKER_APT_CONF_DIR
+        sudo mkdir -p $IMGMAKER_APT_TRUST_DIR
+        sudo chroot $IMGMAKER_SYSTEM_DIR apt-get update
+        sudo chroot $IMGMAKER_SYSTEM_DIR apt-get dist-upgrade -y
+        #sudo chroot $IMGMAKER_SYSTEM_DIR /bin/bash -c "debconf-set-selections <<< 'locales/locales_to_be_generated select $GENERATE_LOCALE'"
+        #sudo chroot $IMGMAKER_SYSTEM_DIR /bin/bash -c "debconf-set-selections <<< 'locales locales/default_environment_locale select $DEFAULT_LOCALE'"
+        sudo chroot $IMGMAKER_SYSTEM_DIR rm -fv /etc/default/locale
+        #sudo chroot $IMGMAKER_SYSTEM_DIR dpkg-reconfigure -frontend=Noninteractive locales
+        for i in $(find $IMGMAKER_HOOK_DIR -name *.d.sh); do
                 . $i > $i.log
         done
-        sudo chroot $BUILDDIR apt-get update
-        sudo chroot $BUILDDIR apt-get dist-upgrade -y
-        sudo cp $KRNDIR/*.deb $BUILDDIR/home
-        sudo chroot $BUILDDIR bash -c 'dpkg -i /home/*.deb'
-        #sudo chroot $BUILDDIR apt-get clean
-        sudo chroot $BUILDDIR apt-get update
-        #sudo chroot $BUILDDIR /bin/bash -c "debconf-set-selections <<< 'keyboard-configuration/variant: $KEYBOARD_LOCALE'"
-        sudo chroot $BUILDDIR apt-get install -t sid e2fsprogs e2fsck-static xserver-xorg-input-multitouch x11-touchscreen-calibrator xdm -y
-        sudo chroot $BUILDDIR apt-get install gsl1680 -y
-	sudo chroot $BUILDDIR dpkg-reconfigure xdm
-        #sudo chroot $BUILDDIR apt-get clean
-        #sudo chroot $BUILDDIR apt-get
-        sudo chroot $BUILDDIR apt-get install $PACK_LIST -y
-        sudo chroot $BUILDDIR apt-get clean
-        #sudo chroot $BUILDDIR dpkg-reconfigure -frontend=Noninteractive keyboard-configuration
+        sudo chroot $IMGMAKER_SYSTEM_DIR apt-get update
+        sudo chroot $IMGMAKER_SYSTEM_DIR apt-get dist-upgrade -y
+        sudo cp $IMGMAKER_KERNEL_DIR/*.deb $IMGMAKER_SYSTEM_DIR/home
+        sudo chroot $IMGMAKER_SYSTEM_DIR bash -c 'dpkg -i /home/*.deb'
+        #sudo chroot $IMGMAKER_SYSTEM_DIR apt-get clean
+        sudo chroot $IMGMAKER_SYSTEM_DIR apt-get update
+        #sudo chroot $IMGMAKER_SYSTEM_DIR /bin/bash -c "debconf-set-selections <<< 'keyboard-configuration/variant: $KEYBOARD_LOCALE'"
+        sudo chroot $IMGMAKER_SYSTEM_DIR apt-get install -t sid e2fsprogs e2fsck-static xserver-xorg-input-multitouch x11-touchscreen-calibrator xdm -y
+        sudo chroot $IMGMAKER_SYSTEM_DIR apt-get install gsl1680 -y
+	sudo chroot $IMGMAKER_SYSTEM_DIR dpkg-reconfigure xdm
+        #sudo chroot $IMGMAKER_SYSTEM_DIR apt-get clean
+        #sudo chroot $IMGMAKER_SYSTEM_DIR apt-get
+        sudo chroot $IMGMAKER_SYSTEM_DIR apt-get install $IMGMAKER_PACK_LIST -y
+        sudo chroot $IMGMAKER_SYSTEM_DIR apt-get clean
+        #sudo chroot $IMGMAKER_SYSTEM_DIR dpkg-reconfigure -frontend=Noninteractive keyboard-configuration
         echo "
         none            /tmp        tmpfs   defaults,noatime,mode=1777        0       0
         /dev/mmcblk0p1  /           ext4    relatime,errors=remount-ro        0       0
-        " | sudo tee -a $BUILDDIR/etc/fstab
+        " | sudo tee -a $IMGMAKER_SYSTEM_DIR/etc/fstab
 
         echo "
         127.0.0.1 localhost
-        127.0.1.1 $HOSTNAME
+        127.0.1.1 $IMGMAKER_HOSTNAME
 
         # The following lines are desirable for IPv6 capable hosts
         ::1     ip6-localhost ip6-loopback
@@ -169,7 +169,7 @@ setup_system_partition(){
         ff02::1 ip6-allnodes
         ff02::2 ip6-allrouters
         ff02::3 ip6-allhosts
-        " | sudo tee $BUILDDIR/etc/hosts
+        " | sudo tee $IMGMAKER_SYSTEM_DIR/etc/hosts
 
         echo "
         ######################################################################
@@ -210,15 +210,15 @@ setup_system_partition(){
         #     netmask 255.255.255.0
         #     broadcast 192.168.0.255
         #     gateway 192.168.0.1
-        " | sudo tee $BUILDDIR/etc/network/interfaces
+        " | sudo tee $IMGMAKER_SYSTEM_DIR/etc/network/interfaces
         echo "export HOME=/root
-/usr/bin/xvkbd -xdm -geometry 1024x300+0+300 & " | sudo tee -a $BUILDDIR/etc/X11/xdm/Xsetup
-        echo "/usr/bin/pkill xvkbd & " | sudo tee -a $BUILDDIR/etc/X11/xdm/Xstartup
-        sudo mkdir -p $BUILDDIR/lib/firmware
-        sudo cp -Rv $FWDIR/* $BUILDDIR/lib/firmware
-        sudo chroot $BUILDDIR update-rc.d igslx680 defaults
-        sudo chroot $BUILDDIR update-rc.d igslx680 enable
-        echo "$HOSTNAME" | sudo tee $BUILDDIR/etc/hostname
+/usr/bin/xvkbd -xdm -geometry 1024x300+0+300 & " | sudo tee -a $IMGMAKER_SYSTEM_DIR/etc/X11/xdm/Xsetup
+        echo "/usr/bin/pkill xvkbd & " | sudo tee -a $IMGMAKER_SYSTEM_DIR/etc/X11/xdm/Xstartup
+        sudo mkdir -p $IMGMAKER_SYSTEM_DIR/lib/firmware
+        sudo cp -Rv $IMGMAKER_FIRMWARE_DIR/* $IMGMAKER_SYSTEM_DIR/lib/firmware
+        sudo chroot $IMGMAKER_SYSTEM_DIR update-rc.d igslx680 defaults
+        sudo chroot $IMGMAKER_SYSTEM_DIR update-rc.d igslx680 enable
+        echo "$IMGMAKER_HOSTNAME" | sudo tee $IMGMAKER_SYSTEM_DIR/etc/hostname
 }
 
 select_dtb(){
@@ -228,39 +228,40 @@ select_dtb(){
         while read -r line; do # process file by file
                 let i=$i+1
                 W+=($i "$line")
-        done < <( \ls -1 $DTDIR )
-        export DTFILE=$(dialog --title "Select your Device Tree from the following" --menu "Chose one" 30 78 17 "${W[@]}" 3>&2 2>&1 1>&3)
+        done < <( \ls -1 $IMGMAKER_DEVICETREE_DIR )
+        export IMGMAKER_DEVICETREE_FILE=$(dialog --title "Select your Device Tree from the following" --menu "Chose one" 30 78 17 "${W[@]}" 3>&2 2>&1 1>&3)
         clear
-        export DTBIN="$DTDIR/$DTFILE"
+        export IMGMAKER_DEVICETREE_PATH="$IMGMAKER_DEVICETREE_DIR/$IMGMAKER_DEVICETREE_FILE"
 }
 
 setup_boot_partition(){
-        sudo cp $BUILDDIR/boot/*initrd.img* $MNTDIR/
-        INITRD_TMP=$(\ls $MNTDIR/*initrd.img* | sed s_"$MNTDIR"__ | tr -d \/)
+        sudo cp $IMGMAKER_SYSTEM_DIR/boot/*initrd.img* $IMGMAKER_BOOT_DIR/
+        INITRD_TMP=$(\ls $IMGMAKER_BOOT_DIR/*initrd.img* | sed s_"$IMGMAKER_BOOT_DIR"__ | tr -d \/)
+        IMGMAKER_DEVICETREE_FILE_CLEAN=$(echo $IMGMAKER_DEVICETREE_FILE | tr -d "." | tr -d "/")
         echo "fatload mmc 0 0x44000000 zImage
 fatload mmc 0 0x47000000 $INITRD_TMP
-fatload mmc 0 0x49000000 $DTFILE
+fatload mmc 0 0x49000000 $IMGMAKER_DEVICETREE_FILE_CLEAN
 setenv bootargs console=tty1,115200 earlyprintk root=/dev/mmcblk0p2 rootwait panic=10
 bootz 0x44000000 0x47000000 0x49000000
-" | tee $CWD/boot.cmd
+" | tee $IMGMAKER_CWD/boot.cmd
         mkimage -C none -A arm -T script -d boot.cmd boot.scr
-        sudo mv $CWD/boot.scr $MNTDIR/
-        sudo cp $ZIMAGE $MNTDIR
-        sudo cp -v $DTBIN $MNTDIR
-        rm $CWD/boot.cmd
+        sudo mv $IMGMAKER_CWD/boot.scr $IMGMAKER_BOOT_DIR/
+        sudo cp $IMGMAKER_ZIMAGE_PATH $IMGMAKER_BOOT_DIR
+        sudo cp -v $IMGMAKER_DEVICETREE_PATH $IMGMAKER_BOOT_DIR
+        rm $IMGMAKER_CWD/boot.cmd
 }
 
 setup_user(){
-        sudo chroot $BUILDDIR adduser --disabled-password --shell /bin/dash --home /home/$USERNAME $USERNAME
-        sudo chroot $BUILDDIR bash -c "echo $USERNAME:$PASSWORD | chpasswd"
+        sudo chroot $IMGMAKER_SYSTEM_DIR adduser --disabled-password --shell /bin/dash --home /home/$IMGMAKER_USERNAME $IMGMAKER_USERNAME
+        sudo chroot $IMGMAKER_SYSTEM_DIR bash -c "echo $IMGMAKER_USERNAME:$PASSWORD | chpasswd"
         echo "
         /usr/bin/xvkbd -geometry 1024x300+0+300 &
-        " | tee -a $BUILDDIR/home/$USERNAME/.xsession
-        sudo chroot $BUILDDIR apt-get update
-        #sudo chroot $BUILDDIR apt-get dist-upgrade -y
-        #sudo chroot $BUILDDIR apt-get clean
+        " | tee -a $IMGMAKER_SYSTEM_DIR/home/$IMGMAKER_USERNAME/.xsession
+        sudo chroot $IMGMAKER_SYSTEM_DIR apt-get update
+        #sudo chroot $IMGMAKER_SYSTEM_DIR apt-get dist-upgrade -y
+        #sudo chroot $IMGMAKER_SYSTEM_DIR apt-get clean
 }
 
 chroot_enter(){
-        sudo chroot $BUILDDIR
+        sudo chroot $IMGMAKER_SYSTEM_DIR
 }

@@ -1,6 +1,6 @@
 #! /bin/sh
 #http://superuser.com/questions/830733/how-to-build-an-sd-card-image-without-an-sd-card
-export CWD=$(pwd)
+export IMGMAKER_CWD=$(pwd)
 
 [ -f /usr/lib/loop-debootstrap-common ] &&  . /usr/lib/loop-debootstrap-common && echo "Common functions loaded."
 [ -f /usr/lib/loop-debootstrap-common.conf ] &&  . /usr/lib/loop-debootstrap-common.conf && echo "Common settings loaded."
@@ -28,8 +28,8 @@ into the folder with this script before running the script. That's the quick-and
 
 Anyway, as you run this script interactively, you'll be presented with dialogs that are intended to be similar to installing Debian in text-mode(curses, like this https://en.wikipedia.org/wiki/File:Linux-menuconfig.png) and in interactive mode, it exists solely to ask you questions you can more-or-less answer. So let's get started. "
 export UMOUNT_MESSAGE="Unmounting partitions in chroot folder to remove temporary files and existing files."
-export FOLDER_MESSAGE="Deleting and recreating files and folders. This will remove the files in $DISK_NAME"
-export IMGGEN_MESSAGE="Generating a an empty region to use for our virtual disk. $DISK_SIZE"
+export FOLDER_MESSAGE="Deleting and recreating files and folders. This will remove the files in $IMGMAKER_DISK_NAME"
+export IMGGEN_MESSAGE="Generating a an empty region to use for our virtual disk. $IMGMAKER_DISK_SIZE"
 export UBOOT_MESSAGE="Flashing das u-boot to the first part of the image created by the loopback device. This will line up with the fist part of the SD card you eventually flash this img to."
 export PARTITION_MESSAGE="Generating partitions for the Operating System and Boot Region. "
 export MOUNT_MESSAGE="Formatting and Mounting OS Partition and Boot Region."
@@ -37,9 +37,9 @@ export CONFIG_BOOT="Configuring boot-time options. This generates the u-boot con
 export INSTALL_SYSTEM="Installing Base System. The following custom packages will be installed according to the variable \$PACK_LIST. $PACK_LIST"
 export USERCFG_MESSAGE="Configuring your User. This is a non-root user you can log-in as."
 
-[ -z "$CODENAME" ] && exit 1
-[ -z "$BUILDDIR" ] && exit 1
-[ -z "$DISTRO_NAME" ] && INTERACTIVE="YES"
+[ -z "$IMGMAKER_CODENAME" ] && exit 1
+[ -z "$IMGMAKER_SYSTEM_DIR" ] && exit 1
+[ -z "$IMGMAKER_DISTRO_NAME" ] && INTERACTIVE="YES"
 print_the_env
 #ENTER_CHROOT="NO"
 #while getopts d:c o
@@ -61,43 +61,32 @@ unmount_working_dirs
 [ "$INTERACTIVE" = "YES" ] && dialog --title "$PROGRAM_TITLE" --msgbox "$FOLDER_MESSAGE" 30 78
 recreate_working_dirs
 [ "$INTERACTIVE" = "YES" ] && dialog --title "$PROGRAM_TITLE" --msgbox "$IMGGEN_MESSAGE" 30 78
-if [ -z "$DISTRO_NAME" ]; then
-        export DISTRO_NAME=$(dialog --title "$PROGRAM_TITLE" --inputbox "Enter a name for your device." 30 78 3>&1 1>&2 2>&3) && HOSTNAME="$DISTRO_NAME"
+if [ -z "$IMGMAKER_DISTRO_NAME" ]; then
+        export IMGMAKER_DISTRO_NAME=$(dialog --title "$PROGRAM_TITLE" --inputbox "Enter a name for your device." 30 78 3>&1 1>&2 2>&3) && export IMGMAKER_HOSTNAME="$IMGMAKER_DISTRO_NAME"
 fi
-if [ -z "$DISK_SIZE" ]; then
-        export DISK_SIZE=$(dialog --title "$PROGRAM_TITLE" --inputbox "How big is the SD card you will be using?" 30 78 3>&1 1>&2 2>&3)
+if [ -z "$IMGMAKER_DISK_SIZE" ]; then
+        export IMGMAKER_DISK_SIZE=$(dialog --title "$PROGRAM_TITLE" --inputbox "How big is the SD card you will be using?" 30 78 3>&1 1>&2 2>&3)
 fi
 create_empty_disk_image
 [ "$INTERACTIVE" = "YES" ] && dialog --title "$PROGRAM_TITLE" --msgbox "$UBOOT_MESSAGE" 30 78
-if [ -z "$UBOOTBIN" ]; then
-        export UBOOTBIN=$(dialog --title "$PROGRAM_TITLE" --inputbox "Where is your u-boot with SPL file?" 30 78 3>&1 1>&2 2>&3)
-
-fi
-if [ -z "$DTFILE" ]; then
-        export DTFILE=$(dialog --title "$PROGRAM_TITLE" --inputbox "Where is your device tree file?" 30 78 3>&1 1>&2 2>&3)
-        export DTBIN="$CWD/$DTFILE"
+if [ -z "$IMGMAKER_UBOOT_BIN" ]; then
+        export IMGMAKER_UBOOT_BIN=$(dialog --title "$PROGRAM_TITLE" --inputbox "Where is your u-boot with SPL file?" 30 78 3>&1 1>&2 2>&3)
 fi
 write_uboot_to_first
 [ "$INTERACTIVE" = "YES" ] && dialog --title "$PROGRAM_TITLE" --msgbox "$PARTITION_MESSAGE" 30 78
-#if [ -z "$DISK_SIZE" ]; then
-#        export DISK_SIZE=$(dialog --title "$PROGRAM_TITLE" --inputbox "How big is the SD card you will be using?" 30 78 3>&1 1>&2 2>&3)
-#fi
 create_partitions_for_image
 [ "$INTERACTIVE" = "YES" ] && dialog --title "$PROGRAM_TITLE" --msgbox "$MOUNT_MESSAGE" 30 78
 setup_partitions_for_image
 [ "$INTERACTIVE" = "YES" ] && dialog --title "$PROGRAM_TITLE" --msgbox "$INSTALL_SYSTEM" 30 78
-if [ -z "$USERNAME" ]; then
-        export USERNAME=$(dialog --title "$PROGRAM_TITLE" --inputbox "What would you like your username to be?" 30 78 3>&1 1>&2 2>&3)
+if [ -z "$IMGMAKER_USERNAME" ]; then
+        export IMGMAKER_USERNAME=$(dialog --title "$PROGRAM_TITLE" --inputbox "What would you like your username to be?" 30 78 3>&1 1>&2 2>&3)
 fi
 if [ -z "$PASSWORD" ]; then
         export PASSWORD=$(dialog --title "$PROGRAM_TITLE" --passwordbox "Set a password for your user" 30 78 3>&1 1>&2 2>&3)
 fi
 setup_system_partition
-[ -z "$DTFILE" ] && select_dtb
+[ -z "$IMGMAKER_DEVICETREE_PATH" ] && select_dtb
 [ "$INTERACTIVE" = "YES" ] && dialog --title "$PROGRAM_TITLE" --msgbox "$CONFIG_BOOT" 30 78
-#if [ -z "$DISK_SIZE" ]; then
-#        export DISK_SIZE=$(dialog --title "$PROGRAM_TITLE" --inputbox "How big is the SD card you will be using?" 30 78 3>&1 1>&2 2>&3)
-#fi
 setup_boot_partition
 [ "$INTERACTIVE" = "YES" ] && dialog --title "$PROGRAM_TITLE" --msgbox "$USERCFG_MESSAGE $USERNAME" 30 78
 setup_user
