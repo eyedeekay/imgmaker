@@ -93,6 +93,7 @@ if [ -z "$PASSWORD" ]; then
         export PASSWORD=$(dialog --title "$PROGRAM_TITLE" --passwordbox "Set a password for your user" 30 78 3>&1 1>&2 2>&3)
 fi
 setup_system_partition
+[ -x "$DTBIN" ] && select_dtb
 [ "$INTERACTIVE" = "YES" ] && dialog --title "$PROGRAM_TITLE" --msgbox "$CONFIG_BOOT" 30 78
 #if [ -z "$DISK_SIZE" ]; then
 #        export DISK_SIZE=$(dialog --title "$PROGRAM_TITLE" --inputbox "How big is the SD card you will be using?" 30 78 3>&1 1>&2 2>&3)

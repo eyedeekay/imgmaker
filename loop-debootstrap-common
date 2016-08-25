@@ -221,6 +221,19 @@ setup_system_partition(){
         echo "$HOSTNAME" | sudo tee $BUILDDIR/etc/hostname
 }
 
+select_dtb(){
+        #!/bin/bash
+        let i=0 # define counting variable
+        W=() # define working array
+        while read -r line; do # process file by file
+                let i=$i+1
+                W+=($i "$line")
+        done < <( \ls -1 $DTDIR )
+        export DTFILE=$(dialog --title "Select your Device Tree from the following" --menu "Chose one" 24 80 17 "${W[@]}" 3>&2 2>&1 1>&3)
+        clear
+        export DTBIN="$DTDIR/$DTFILE"
+}
+
 setup_boot_partition(){
         sudo cp $BUILDDIR/boot/*initrd.img* $MNTDIR/
         INITRD_TMP=$(\ls $MNTDIR/*initrd.img* | sed s_"$MNTDIR"__ | tr -d \/)
