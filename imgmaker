@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 #http://superuser.com/questions/830733/how-to-build-an-sd-card-image-without-an-sd-card
 export IMGMAKER_CWD=$(pwd)
 
