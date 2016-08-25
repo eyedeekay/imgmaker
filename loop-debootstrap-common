@@ -229,7 +229,7 @@ select_dtb(){
                 let i=$i+1
                 W+=($i "$line")
         done < <( \ls -1 $DTDIR )
-        export DTFILE=$(dialog --title "Select your Device Tree from the following" --menu "Chose one" 24 80 17 "${W[@]}" 3>&2 2>&1 1>&3)
+        export DTFILE=$(dialog --title "Select your Device Tree from the following" --menu "Chose one" 30 78 17 "${W[@]}" 3>&2 2>&1 1>&3)
         clear
         export DTBIN="$DTDIR/$DTFILE"
 }
