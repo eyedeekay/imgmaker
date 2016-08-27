@@ -1,5 +1,2 @@
-mount: wrong fs type, bad option, bad superblock on /dev/loop2,
-       missing codepage or helper program, or other error
-
-       In some cases useful info is found in syslog - try
-       dmesg | tail or so.
+mke2fs 1.43.1 (08-Jun-2016)
+mkfs.ext4: invalid blocks '/dev/loop2' on device '^metadata_csum'

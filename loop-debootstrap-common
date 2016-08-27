@@ -108,9 +108,9 @@ setup_partitions_for_image(){
                 sudo mkfs.ext4 /dev/loop2 1> logs/42rootfs64.log 2> logs/42rootfs64.err
         else
                 echo "Using mke2fs.conf at $MKE2FS_CONFIG" 1> logs/42rootfsmod.log 2> logs/42rootfsmod.err
-                sudo mkfs.ext4 -O ^64bit^metadata_csum /dev/loop2 1> logs/42rootfs.log 2> logs/42rootfs.err
+                sudo mkfs.ext4 -O ^64bit ^metadata_csum /dev/loop2 1> logs/42rootfs.log 2> logs/42rootfs.err
         fi
-        sudo mount -t ext4 /dev/loop2 $IMGMAKER_SYSTEM_DIR 1> logs/42rootfs.log 2> logs/42rootfs.err
+        sudo mount -t ext4 /dev/loop2 $IMGMAKER_SYSTEM_DIR 1> logs/41rootmount.log 2> logs/42rootmount.err
 }
 
 img_debootstrap(){
@@ -329,17 +329,18 @@ select_dtb(){
 setup_boot_partition(){
         sudo cp $IMGMAKER_SYSTEM_DIR/boot/*initrd.img* $IMGMAKER_BOOT_DIR/
         INITRD_TMP=$(\ls $IMGMAKER_BOOT_DIR/*initrd.img* | sed s_"$IMGMAKER_BOOT_DIR"__ | tr -d \/)
-        IMGMAKER_DEVICETREE_FILE_CLEAN=$(echo $IMGMAKER_DEVICETREE_FILE | tr -d "." | tr -d "/")
+        IMGMAKER_DEVICETREE_FILE_CLEAN=$(echo $IMGMAKER_DEVICETREE_FILE | tr -d "/")
         echo "fatload mmc 0 0x44000000 zImage
 fatload mmc 0 0x47000000 $INITRD_TMP
 fatload mmc 0 0x49000000 $IMGMAKER_DEVICETREE_FILE_CLEAN
-setenv bootargs console=tty1,115200 earlyprintk root=/dev/mmcblk0p2 rootwait panic=10
-bootz 0x44000000 0x47000000 0x49000000
+setenv bootargs console=tty1,115200 earlyprintk root=/dev/mmcblk0p2 initrd=0x47000000 rootwait panic=10
+bootz 0x44000000 - 0x49000000
 " | tee $IMGMAKER_CWD/boot.cmd
         mkimage -C none -A arm -T script -d boot.cmd boot.scr
         sudo mv $IMGMAKER_CWD/boot.scr $IMGMAKER_BOOT_DIR/
         sudo cp $IMGMAKER_ZIMAGE_PATH $IMGMAKER_BOOT_DIR
         sudo cp -v $IMGMAKER_DEVICETREE_PATH $IMGMAKER_BOOT_DIR
+        sudo cp $IMGMAKER_CWD/boot.cmd $IMGMAKER_BOOT_DIR/
         rm $IMGMAKER_CWD/boot.cmd
 }
 
