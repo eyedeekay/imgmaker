@@ -1,0 +1,9 @@
+OK
+OK
+OK
+OK
+OK
+Hit http://packages.devuan.org jessie InRelease
+Hit http://packages.devuan.org jessie/main armhf Packages
+Ign http://packages.devuan.org jessie/main Translation-en
+Reading package lists...

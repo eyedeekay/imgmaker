@@ -113,6 +113,51 @@ setup_partitions_for_image(){
         sudo mount -t ext4 /dev/loop2 $IMGMAKER_SYSTEM_DIR 1> logs/42rootfs.log 2> logs/42rootfs.err
 }
 
+img_debootstrap(){
+        if [ -f $IMGMAKER_CACHE ]; then
+                if [ -z "$KEYRING" ]; then
+                        sudo qemu-debootstrap --keyring=$KEYRING --include=$IMGMAKER_DEFAULT_PACKAGES \
+                                --exclude=$IMGMAKER_EXCLUDED_PACKAGES --components=$IMGMAKER_COMPONENTS \
+                                --variant=$IMGMAKER_VARIANT --force-check-gpg \
+                                --unpack-tarball=$IMGMAKER_CACHE \
+                                --arch=$ARCH $IMGMAKER_CODENAME $IMGMAKER_SYSTEM_DIR $SYSTEM_MIRROR
+                else
+                        sudo qemu-debootstrap --include=$IMGMAKER_DEFAULT_PACKAGES \
+                                --exclude=$IMGMAKER_EXCLUDED_PACKAGES --components=$IMGMAKER_COMPONENTS \
+                                --variant=$IMGMAKER_VARIANT $IMGMAKER_CHECK_GPG \
+                                --unpack-tarball=$IMGMAKER_CACHE \
+                                --arch=$ARCH $IMGMAKER_CODENAME $IMGMAKER_SYSTEM_DIR $SYSTEM_MIRROR
+                fi
+        else
+                if [ -z "$KEYRING" ]; then
+                        sudo qemu-debootstrap --keyring=$KEYRING --include=$IMGMAKER_DEFAULT_PACKAGES \
+                                --exclude=$IMGMAKER_EXCLUDED_PACKAGES --components=$IMGMAKER_COMPONENTS \
+                                --variant=$IMGMAKER_VARIANT --force-check-gpg \
+                                --arch=$ARCH $IMGMAKER_CODENAME $IMGMAKER_SYSTEM_DIR $SYSTEM_MIRROR
+                else
+                        sudo qemu-debootstrap --include=$IMGMAKER_DEFAULT_PACKAGES \
+                                --exclude=$IMGMAKER_EXCLUDED_PACKAGES --components=$IMGMAKER_COMPONENTS \
+                                --variant=$IMGMAKER_VARIANT $IMGMAKER_CHECK_GPG \
+                                --arch=$ARCH $IMGMAKER_CODENAME $IMGMAKER_SYSTEM_DIR $SYSTEM_MIRROR
+                fi
+        fi
+}
+
+cache_debootstrap_system(){
+        if [ -z "$KEYRING" ]; then
+                sudo qemu-debootstrap --keyring=$KEYRING --include=$IMGMAKER_DEFAULT_PACKAGES \
+                        --exclude=$IMGMAKER_EXCLUDED_PACKAGES --components=$IMGMAKER_COMPONENTS \
+                        --variant=$IMGMAKER_VARIANT --force-check-gpg \
+                        --make-tarball=$IMGMAKER_CACHE \
+                        --arch=$ARCH $IMGMAKER_CODENAME $IMGMAKER_SYSTEM_DIR $SYSTEM_MIRROR
+        else
+                sudo qemu-debootstrap --include=$IMGMAKER_DEFAULT_PACKAGES \
+                --exclude=$IMGMAKER_EXCLUDED_PACKAGES --components=$IMGMAKER_COMPONENTS \
+                --variant=$IMGMAKER_VARIANT $IMGMAKER_CHECK_GPG \
+                --make-tarball=$IMGMAKER_CACHE \
+                --arch=$ARCH $IMGMAKER_CODENAME $IMGMAKER_SYSTEM_DIR $SYSTEM_MIRROR
+        fi
+}
 
 setup_system_partition(){
         export LANG=C

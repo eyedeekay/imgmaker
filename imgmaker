@@ -41,7 +41,7 @@ export USERCFG_MESSAGE="Configuring your User. This is a non-root user you can l
 [ -z "$IMGMAKER_SYSTEM_DIR" ] && exit 1
 [ -z "$IMGMAKER_DISTRO_NAME" ] && INTERACTIVE="YES"
 print_the_env
-exit
+#exit
 #ENTER_CHROOT="NO"
 #while getopts d:c o
 #do	case "$o" in

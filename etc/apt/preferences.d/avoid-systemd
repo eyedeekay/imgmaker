@@ -1,0 +1,10 @@
+Package: systemd
+Pin: release o=Debian
+Pin-Priority: -1
+Package: systemd-*
+Pin: release o=Debian
+Pin-Priority: -1
+Package: systemd-sysv
+Pin: release o=Debian
+Pin-Priority: -1
+
