@@ -348,7 +348,7 @@ setup_boot_partition(){
 }
 
 setup_user(){
-        sudo chroot $IMGMAKER_SYSTEM_DIR adduser --disabled-password --shell /bin/dash --home /home/$IMGMAKER_USERNAME $IMGMAKER_USERNAME
+        sudo chroot $IMGMAKER_SYSTEM_DIR adduser --disabled-password --gecos "" --shell /bin/dash --home /home/$IMGMAKER_USERNAME $IMGMAKER_USERNAME
         sudo chroot $IMGMAKER_SYSTEM_DIR bash -c "echo $IMGMAKER_USERNAME:$PASSWORD | chpasswd"
         echo "
         /usr/bin/xvkbd -geometry 1024x300+0+300 &
