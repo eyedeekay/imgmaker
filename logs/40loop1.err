@@ -1,0 +1,45 @@
+losetup: invalid option -- 's'
+
+Usage:
+ losetup [options] [<loopdev>]
+ losetup [options] -f | <loopdev> <file>
+
+Set up and control loop devices.
+
+Options:
+ -a, --all                     list all used devices
+ -d, --detach <loopdev>...     detach one or more devices
+ -D, --detach-all              detach all used devices
+ -f, --find                    find first unused device
+ -c, --set-capacity <loopdev>  resize the device
+ -j, --associated <file>       list all devices associated with <file>
+
+ -o, --offset <num>            start at offset <num> into file
+     --sizelimit <num>         device is limited to <num> bytes of the file
+ -P, --partscan                create a partitioned loop device
+ -r, --read-only               set up a read-only loop device
+     --show                    print device name after setup (with -f)
+ -v, --verbose                 verbose mode
+
+ -l, --list                    list info about all or specified (default)
+ -O, --output <cols>           specify columns to output for --list
+ -n, --noheadings              don't print headings for --list output
+     --raw                     use raw --list output format
+ -J, --json                    use JSON --list output format
+
+ -h, --help     display this help and exit
+ -V, --version  output version information and exit
+
+Available --list columns:
+         NAME  loop device name
+    AUTOCLEAR  autoclear flag set
+    BACK-FILE  device backing file
+     BACK-INO  backing file inode number
+ BACK-MAJ:MIN  backing file major:minor device number
+      MAJ:MIN  loop device major:minor number
+       OFFSET  offset from the beginning
+     PARTSCAN  partscan flag set
+           RO  read-only device
+    SIZELIMIT  size limit of the file in bytes
+
+For more details see losetup(8).
