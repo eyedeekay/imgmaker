@@ -348,7 +348,11 @@ setup_boot_partition(){
 }
 
 setup_user(){
-        sudo chroot $IMGMAKER_SYSTEM_DIR adduser --disabled-password --gecos "" --shell /bin/dash --home /home/$IMGMAKER_USERNAME $IMGMAKER_USERNAME
+        [ -z "$IMGMAKER_FULLNAME" ] && IMGMAKER_FULLNAME=$IMGMAKER_USERNAME
+        [ -z "$IMGMAKER_ROOM" ] && IMGMAKER_ROOM="0"
+        [ -z "$IMGMAKER_WPHONE" ] && IMGMAKER_FULLNAME="9998675309"
+        [ -z "$IMGMAKER_HPHONE" ] && IMGMAKER_FULLNAME="9998675309"
+        sudo chroot $IMGMAKER_SYSTEM_DIR adduser --disabled-password --gecos "$IMGMAKER_FULLNAME,$IMGMAKER_ROOM,$IMGMAKER_WPHONE,$IMGMAKER_HPHONE" --shell /bin/dash --home /home/$IMGMAKER_USERNAME $IMGMAKER_USERNAME
         sudo chroot $IMGMAKER_SYSTEM_DIR bash -c "echo $IMGMAKER_USERNAME:$PASSWORD | chpasswd"
         echo "
         /usr/bin/xvkbd -geometry 1024x300+0+300 &
