@@ -16,4 +16,17 @@ uninstall:
 	rm -rf /etc/imgmaker/imgmakrc \
 	/usr/lib/imgmaker/
 
+clean:
+	rm ../imgmaker_0.4-1_amd64.deb
+
 deb-pkg:
+	checkinstall --default \
+		--install=no \
+		--pkgname="imgmaker" \
+		--pkgversion="0.4" \
+		--pkglicense="mit" \
+		--pakdir=../ \
+		--deldoc=yes \
+		--deldesc=yes \
+		--delspec=yes \
+		--backup=no
