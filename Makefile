@@ -11,6 +11,8 @@ install:
 	mkdir -p /etc/imgmaker/
 	cp loop-debootstrap.conf \
 	/etc/imgmaker/imgmakrc
+	cp imgmaker \
+	/usr/bin/imgmaker
 
 uninstall:
 	rm -rf /etc/imgmaker/imgmakrc \
