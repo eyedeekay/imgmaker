@@ -2,11 +2,12 @@
 #http://superuser.com/questions/830733/how-to-build-an-sd-card-image-without-an-sd-card
 export IMGMAKER_CWD=$(pwd)
 
-[ -f /usr/lib/loop-debootstrap-common ] &&  . /usr/lib/loop-debootstrap-common && echo "Common functions loaded."
-[ -f /usr/lib/loop-debootstrap-common.conf ] &&  . /usr/lib/loop-debootstrap-common.conf && echo "Common settings loaded."
+[ -f /usr/lib/imgmaker/loop-debootstrap-common ] &&  . /usr/lib/imgmaker/loop-debootstrap-common && echo "Common functions loaded."
+[ -f /usr/lib/imgmaker/loop-debootstrap-common.conf ] &&  . /usr/lib/imgmaker/loop-debootstrap-common.conf && echo "Common settings loaded."
 
 [ -f loop-debootstrap.conf ] && . ./loop-debootstrap.conf && echo "Settings Loaded"
-[ -f /etc/imgmakrc ] && . /etc/imgmakrc && echo "Settings Loaded"
+[ -f /etc/imgmaker/loop-debootstrap.conf ] && . /etc/imgmaker/loop-debootstrap.conf && echo "Settings Loaded"
+[ -f /etc/imgmaker/imgmakrc ] && . /etc/imgmaker/imgmakrc && echo "Settings Loaded"
 
 [ -f loop-debootstrap-common ] &&  . ./loop-debootstrap-common && echo "Custom common functions Loaded"
 [ -f loop-debootstrap-common.conf ] && . ./loop-debootstrap-common.conf && echo "Custom common settings loaded."

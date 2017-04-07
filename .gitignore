@@ -1,3 +1,5 @@
+*/*.img
+*/*.img.last
 *.img
 *.img.last
 sdbuild-*
