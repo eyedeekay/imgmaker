@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>
+    imgmaker
+    </title>
+</head>
+<body>
+<div id="content">
+<h2>imgmaker</h2>
+
+<p>This is a script used to generate an image file containing a Debian image for a
+tablet which can be booted from an SD card. It is written the way it is for one
+specific purpose, to emulate as closely as possible the experience of installing
+Debian from a CD image on PC hardware in order to approximate a Debian, Devuan,
+or Ubuntu based GNU/Linux Image. Technically it's a little flexible on the GNU
+but it'll probably be easier to start with the standard Debian stuff which is
+frequently GNU and I personally like GNU, but do what you like with it.</p>
+
+<p>Please keep in mind that these readme's(And also my blog) are the notes of an
+aimless, underachieving, untrained amateur. I've tried to be detailed enough to
+be perfectly clear to me. I probably make mistakes, I probably say things that
+are unnecessary. But I think it'll probably be helpful as long as you're mindful
+of who wrote it.</p>
+
+<h1>What does it do?</h1>
+
+<p>It combines a few things to enable you to generate a custom SD card image for
+an Allwinner tablet, right now just a couple of Allwinner A33 generic cheap
+tablets but there's no reason that you can't swap a few parts to make it work
+with any tablet capable of booting from an SD card, which I guess is all the
+Allwinner tablets, and probably a couple of others. I read alot of news and if
+I had to guess, I'd say that most of these dudes selling no-name Allwinner
+tablets are pretty lazy and minimally competent alot of the time. They modify
+the devices fairly little and take the path of least resistance to a minimum
+viable product, part of which means that they're left pretty easy to manipulate.
+I've had several and the only trouble I've ever had booting an alternate system
+from an SD card was finding an alternate system to use(Hence, literally
+everything I've put on or looked at on github, to one end or another. And all
+the forks do serve a purpose, for when I return to whatever I was trying to
+learn, in case the project has progressed, I can determine the differences
+without having to host all that code locally. Which I would do if it were an
+option, but I just don't have the storage space.). They seem to be pretty
+generic most of the time. On my tablet, for instance, there is a truly startling
+amount of firmware for devices that are not contained on the system.</p>
+
+<p>So, step by step</p>
+
+<ol>
+<li>First, it makes sure that the loopback devices it needs are unmounted,
+and creates the folders that will be used to bootstrap the system.</li>
+<li>Second, it designates a large section of the disk and sets it to 0, naming
+that section $DISTRO_NAME-$VERSION_NAME.img, and then mounts the newly
+created img file as a loopback device at /dev/loop0.</li>
+<li>Third, it writes u-boot directly to the first part of the newly created img
+file using the loopback device.</li>
+<li>Fourth, it takes the loopback device and partitions it automatically with
+fdisk. This process uses up all of the space on the device by default and
+currently doesn't have any way to change the behavior, but that is planned.</li>
+<li>Fifth, it mounts those partitions block-device style at /dev/loop0p1 for
+the boot partition and at /dev/loop0p2 for the system partition.</li>
+<li>Sixth, it sets up a complete Debian system in a chroot using qemu to
+complete the process with binaries for an ARM architecture.</li>
+<li>Seventh, it runs scripts to customize the chrooted system's settings.</li>
+<li>Eighth, it installs custom packages in the chrooted system from a simple
+user-defined list.</li>
+<li>Ninth, it creates a user and exits the chroot.</li>
+</ol>
+
+<p>It also contains a set of functions you could include in your own script.</p>
+
+<h3>How do I adapt it to support my tablet?</h3>
+
+<p>There are a few files and folders used to configure what goes into the image.
+They are subject to change, but for now, here are what they are and what they
+do.</p>
+
+<ul>
+<li><strong>imgmaker/kernel</strong></li>
+</ul>
+
+<p>This folder contains the files that install the kernel for your tablet system.
+<em>For now, this folder expects at least:</em> a zImage, and the debs built when
+you build a Linux kernel with the command:</p>
+
+<pre><code>    make deb-pkg
+</code></pre>
+
+<p>The zImage is copied directly into the boot partition, and the debs are copied
+into the system partition and installed by dpkg. Alternatively, the debs can
+be installed from a repository or you can copy the kernel files manually with
+a script in the hooks directory(see below.)</p>
+
+<ul>
+<li><strong>imgmaker/firmware</strong></li>
+</ul>
+
+<p>This folder contains the files related to the firmware you may or may not need
+to operate the tablet. They will be copied directly into the system partition
+at the /lib/firmware/ folder, maintaining the same structure as in the
+imgmaker/firmware folder.</p>
+
+<ul>
+<li><strong>imgmaker/dtb</strong></li>
+</ul>
+
+<p>This file contains device trees.  If you do not set the $DTFILE variable in
+advance, you will be presented with an interactive menu which lists all the
+.dtb file in this folder.</p>
+
+<ul>
+<li><strong>imgmaker/hooks</strong></li>
+</ul>
+
+<p>This file contains scripts which can be customized in just about any way you
+like, because they're just scripts that are run right after the system is
+bootstrapped. imgmaker runs all the scripts ending in ".d.sh" in the hooks
+folder.</p>
+
+<h3>How do I use it?</h3>
+
+<p>It's pretty simple, and it'll get simpler soon. I'm in the process of making an
+interactive version of the script which imitates the Debian system installer,
+as similar to installing from a Live CD or USB Stick as possible. If you've set
+a few <a href="https://github.com/cmotc/imgmaker/blob/master/loop-debootstrap.conf">environment variables</a>,
+it will just prompt you for your sudo password a couple times as it creates
+loopback devices and runs debootstrap. If you have not set those environment
+variables, then you'll be prompted with an interactive menu that will make sure
+that all the minimum required information is known while you're building.</p>
+
+<p>Per usual, firmware seems to be the sticking point, but much less than you'd
+think. Ultimately, I'd prefer to handle this by packaging, and the firmware
+directory's existence is pretty tenuous on that basis. What I'd prefer is to
+make a sort of "Crude tablet firmware packaging kit" which makes some educated
+guesses at the firmware on a tablet, checks if they seem to be sane, extracts
+the firmware and generates a non-free binary .deb package(And a useful amount of
+documentation to allow for culling/replacing unnecessary firmware)according to
+some set of rules. That way, a person could generate a package with minimal
+skill, sign it, store it, and so on. Then, admittedly with a few complications
+on the road, you could put that firmware package onto a USB Armory stick, make
+that stick non-writable without your key, and have your tablet load the firmware
+from that stick a' la Joanna Rutkowska and Invisible Things Lab's outlook on
+verified firmware. Also simpler things like being able to give out updates on
+the off chance your device gets one. So I'm on the fence about the firmware
+directory's very existence. I'm convinced that a better way is to package the
+firmware.</p>
+
+<h2>Resources</h2>
+
+<ul>
+<li><a href="https://github.com/igorpecovnik/lib">Igor Pecovnik's Armbian build system</a></li>
+<li><a href="https://github.com/linux-sunxi/">Linux-Sunxi Github</a></li>
+<li><a href="https://linux-sunxi.org/Linux_mainlining_effort">Sunxi Mainline Status</a></li>
+<li><a href="http://superuser.com/questions/830733/how-to-build-an-sd-card-image-without-an-sd-card">How to build an SD card image without an SD Card, Super User</a></li>
+<li><a href="https://web2.clarkson.edu/projects/itl/honeypot/ddtutorial.txt">How to create an image file and use it like a block device</a></li>
+<li><a href="https://linux-sunxi.org/Mainline_Debian_HowTo">Mainline Debian Howto, but with no simplefb</a></li>
+<li><a href="https://linux-sunxi.org/Mainline_Kernel_Howto#simplefb">Linux Sunxi Mainline Kernel Howto, includes simplefb instructions</a></li>
+<li><a href="https://linux-sunxi.org/Touchscreen">Touchscreens in General from linux-sunxi</a> <a href="https://linux-sunxi.org/GSL1680">Silead gslx Series Touchscreen</a></li>
+<li><a href="https://wiki.debian.org/InstallingDebianOn/Allwinner">Installing Debian on Allwinner</a></li>
+<li><a href="https://linux-sunxi.org/Boot">Details on how Allwinner SOC's boot</a></li>
+<li><a href="https://linux-sunxi.org/Mainline_U-Boot">Building mainline u-boot for Allwinner SOC's</a></li>
+<li><a href="https://linux-sunxi.org/LCD">Some stuff about configuring LCD's with u-boot, but I think for an old version. Boot.scr and the device tree are doing it here.</a></li>
+<li><a href="https://www.rapid7.com/db/modules/post/multi/escalate/allwinner_backdoor">An excellent reason to take control of your device and update your kernel</a></li>
+<li>I have a bunch more I'm pretty sure, but they're harder for me to remember
+at the moment.</li>
+</ul>
+
+<h2>To-do</h2>
+
+<p>These will be done in this order, unless something needs to be added to the
+list, in which case if I'm too tired to do it at the time I'll put it here so I
+don't forget.</p>
+
+<ul>
+<li>Execute fun-sounding /etc/skel idea!</li>
+<li>Add Kernel Selection Support.</li>
+<li>Add custom partitions support.</li>
+<li>Add getopts mode</li>
+<li>Create more advanced way of hooking into the build process with scripts.</li>
+<li>Make it possible to use more keyboards and display/login managers(right now
+only XDM and xvkbd are used)</li>
+<li>Remove bash-non-dashisms</li>
+<li>Add $HOME encryption by default.</li>
+<li>Add Full-Disk Encryption option.</li>
+</ul>
+</div>
+</body>
